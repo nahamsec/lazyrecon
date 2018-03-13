@@ -7,11 +7,11 @@
 
 ```
 
-#Usage
+# Usage
 
 `./lazyrecon.sh target`
 
-#About
+# About
 
 This script is intended to automate your reconnaissance process in an organized fashion by performing the following:
 
@@ -23,7 +23,7 @@ This script is intended to automate your reconnaissance process in an organized 
 - Perform dirsearch 
 - Generate a HTML report with output from the tools above
 
-This requires [Bug Bounty Hunting Tools] (https://github.com/nahamsec/bbht) in order for the tools to work. 
+This requires [Bug Bounty Hunting Tools](https://github.com/nahamsec/bbht) in order for the tools to work. 
 
 **Warning:** This code was originally created for personal use for myself, so it's  a bit messy and hopefully it'll be cleaned up with more features in a later release. 
 
