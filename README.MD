@@ -9,7 +9,7 @@
 
 # Usage
 
-`./lazyrecon.sh target`
+`./lazyrecon.sh target.com`
 
 # About
 
