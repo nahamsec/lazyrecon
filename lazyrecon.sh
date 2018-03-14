@@ -1,5 +1,7 @@
 #!/bin/bash
 
+tools_dir="$HOME/usr/git"
+
 discovery(){
   hostalive $1
   screenshot $1
@@ -35,12 +37,12 @@ hostalive(){
 
 screenshot(){
     echo "taking a screenshot of $line"
-    python ~/tools/webscreenshot/webscreenshot.py -o ./$1/$foldername/screenshots/ -i ./$1/$foldername/responsive-$(date +"%Y-%m-%d").txt --timeout=10 -m
+    python $tools_dir/webscreenshot/webscreenshot.py -o ./$1/$foldername/screenshots/ -i ./$1/$foldername/responsive-$(date +"%Y-%m-%d").txt --timeout=10 -m
 }
 
 recon(){
 
-  python ~/tools/Sublist3r/sublist3r.py -d $1 -t 10 -v -o ./$1/$foldername/$1.txt
+  python $tools_dir/Sublist3r/sublist3r.py -d $1 -t 10 -v -o ./$1/$foldername/$1.txt
   curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $1 >> ./$1/$foldername/$1.txt
   discovery $1
   cat ./$1/$foldername/$1.txt | sort -u > ./$1/$foldername/$1.txt
@@ -48,7 +50,7 @@ recon(){
 }
 
 dirsearcher(){
-  python3 ~/tools/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar,sql -u $line
+  python3 $tools_dir/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar,sql -u $line
 }
 
 
@@ -68,7 +70,7 @@ report(){
   echo "     <div class=\"col-sm-6\">" >> ./$1/$foldername/reports/$line.html
   echo "     <div style=\"font-family: 'Mina', serif;\"><h2>Dirsearch</h2></div>" >> ./$1/$foldername/reports/$line.html
   echo "<pre>" >> ./$1/$foldername/reports/$line.html
-  cat ~/tools/dirsearch/reports/$line/* | while read rline; do echo "$rline" >> ./$1/$foldername/reports/$line.html
+  cat $tools_dir/dirsearch/reports/$line/* | while read rline; do echo "$rline" >> ./$1/$foldername/reports/$line.html
   done
   echo "</pre>   </div>" >> ./$1/$foldername/reports/$line.html
 
