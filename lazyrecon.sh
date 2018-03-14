@@ -37,12 +37,12 @@ hostalive(){
 
 screenshot(){
     echo "taking a screenshot of $line"
-    python $tools_dir/webscreenshot/webscreenshot.py -o ./$1/$foldername/screenshots/ -i ./$1/$foldername/responsive-$(date +"%Y-%m-%d").txt --timeout=10 -m
+    python2 $tools_dir/webscreenshot/webscreenshot.py -o ./$1/$foldername/screenshots/ -i ./$1/$foldername/responsive-$(date +"%Y-%m-%d").txt --timeout=10 -m
 }
 
 recon(){
 
-  python $tools_dir/Sublist3r/sublist3r.py -d $1 -t 10 -v -o ./$1/$foldername/$1.txt
+  python2 $tools_dir/Sublist3r/sublist3r.py -d $1 -t 10 -v -o ./$1/$foldername/$1.txt
   curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $1 >> ./$1/$foldername/$1.txt
   discovery $1
   cat ./$1/$foldername/$1.txt | sort -u > ./$1/$foldername/$1.txt
