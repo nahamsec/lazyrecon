@@ -8,7 +8,7 @@ discovery(){
     sleep 1
     dirsearcher $line
     report $1 $line
-    echo "$line report genareted"
+    echo "$line report generated"
     sleep 1
   done
 }
