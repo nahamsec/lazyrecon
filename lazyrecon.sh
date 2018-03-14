@@ -1,6 +1,6 @@
 #!/bin/bash
 
-tools_dir="$HOME/usr/git"
+tools_dir="$HOME/tools"
 
 discovery(){
   hostalive $1
