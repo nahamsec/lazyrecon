@@ -22,8 +22,19 @@ This script is intended to automate your reconnaissance process in an organized 
 - Perform nmap 
 - Perform dirsearch 
 - Generate a HTML report with output from the tools above
+# Added features
+- Resolve subdomains and export to txt file in hosts.txt
+- Color codes for status codes in report.html for easier reading
+- Added additional ports for nmap scan to detect azure cluster services
+- Added check for dns records that points to azure/aws for possible subdmonain takeovers (manual check is required)
+
+# More Features to be added
+- Report suspicious redirects 
+- Massdns subdomain discovery
+- Automate subdomain takeover detection on azure/aws
 
 This requires [Bug Bounty Hunting Tools](https://github.com/nahamsec/bbht) in order for the tools to work. 
 
 **Warning:** This code was originally created for personal use for myself, so it's  a bit messy and hopefully it'll be cleaned up with more features in a later release. 
+
 
