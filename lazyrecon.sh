@@ -11,6 +11,7 @@ discovery(){
     echo "$line report generated"
     sleep 1
   done
+
 }
 
 cleanup(){
@@ -50,7 +51,18 @@ recon(){
 dirsearcher(){
   python3 ~/tools/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar,sql -u $line
 }
-
+hosting() {
+ cat ./$1/$foldername/$1.txt | while read line; do
+ host $line >> hosts.txt
+ echo "-----------------------------------" >> hosts.txt
+ done
+ cat ./$1/$foldername/hosts.txt | while read line; do
+ if [[ "$line" ==  *NXDOMAIN* ]]; then
+ $nnline >> mancheck.txt
+ echo "$line require manual check"
+ fi
+ done
+}
 
 report(){
   touch ./$1/$foldername/reports/$line.html
@@ -67,25 +79,37 @@ report(){
   echo "   <div clsas=\"row\">" >> ./$1/$foldername/reports/$line.html
   echo "     <div class=\"col-sm-6\">" >> ./$1/$foldername/reports/$line.html
   echo "     <div style=\"font-family: 'Mina', serif;\"><h2>Dirsearch</h2></div>" >> ./$1/$foldername/reports/$line.html
-  echo "<pre>" >> ./$1/$foldername/reports/$line.html
-  cat ~/tools/dirsearch/reports/$line/* | while read rline; do echo "$rline" >> ./$1/$foldername/reports/$line.html
+  echo "<pre style='display: block;'>" >> ./$1/$foldername/reports/$line.html
+  cat ~/tools/dirsearch/reports/$line/* | while read nline; do
+  status_code=$(echo "$nline" | awk '{print $1}')
+  if [[ "$status_code" == *20[012345678]* ]]; then
+    echo "<span style='background-color:#00f93645;'>$nline</span>" >> ./$1/$foldername/reports/$line.html
+  elif [[ "$status_code" == *30[012345678]* ]]; then
+        echo "<span style='background-color:#f9f10045;'>$nline</span>" >> ./$1/$foldername/reports/$line.html
+  elif [[ "$status_code" == *40[012345678]* ]]; then
+        echo "<span style='background-color:#0000cc52;'>$nline</span>" >> ./$1/$foldername/reports/$line.html
+  elif [[ "$status_code" == *50[012345678]* ]]; then
+        echo "<span style='background-color:#f9000045;'>$nline</span>" >> ./$1/$foldername/reports/$line.html
+  else
+    echo "<span>$line</span>" >> ./$1/$foldername/reports/$line.html
+  fi
   done
   echo "</pre>   </div>" >> ./$1/$foldername/reports/$line.html
 
   echo "     <div class=\"col-sm-6\">" >> ./$1/$foldername/reports/$line.html
   echo "<div style=\"font-family: 'Mina', serif;\"><h2>Screeshot</h2></div>" >> ./$1/$foldername/reports/$line.html
-  echo "<pre>" >> ./$1/$foldername/reports/$line.html
+  echo "<pre style='display: block;'>" >> ./$1/$foldername/reports/$line.html
   echo "Port 80                              Port 443" >> ./$1/$foldername/reports/$line.html
   echo "<img/src=\"../screenshots/http-$line-80.png\" style=\"max-width: 500px;\"> <img/src=\"../screenshots/https-$line-443.png\" style=\"max-width: 500px;\"> <br>" >> ./$1/$foldername/reports/$line.html
   echo "</pre>" >> ./$1/$foldername/reports/$line.html
 
   echo "<div style=\"font-family: 'Mina', serif;\"><h2>Dig Info</h2></div>" >> ./$1/$foldername/reports/$line.html
-  echo "<pre>" >> ./$1/$foldername/reports/$line.html
+  echo "<pre style='display: block;'>" >> ./$1/$foldername/reports/$line.html
   dig $line >> ./$1/$foldername/reports/$line.html
   echo "</pre>" >> ./$1/$foldername/reports/$line.html
 
   echo "<div style=\"font-family: 'Mina', serif;\"><h2>Host Info</h1></div>" >> ./$1/$foldername/reports/$line.html
-  echo "<pre>" >> ./$1/$foldername/reports/$line.html
+  echo "<pre style='display: block;'>" >> ./$1/$foldername/reports/$line.html
   host $line >> ./$1/$foldername/reports/$line.html
   echo "</pre>" >> ./$1/$foldername/reports/$line.html
 
@@ -95,9 +119,9 @@ report(){
   echo "</pre>" >> ./$1/$foldername/reports/$line.html
 
   echo "<div style=\"font-family: 'Mina', serif;\"><h1>Nmap Results</h1></div>" >> ./$1/$foldername/reports/$line.html
-  echo "<pre>" >> ./$1/$foldername/reports/$line.html
-  echo "nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443" >> ./$1/$foldername/reports/$line.html
-  nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443 $line >> ./$1/$foldername/reports/$line.html
+  echo "<pre style='display: block;'>" >> ./$1/$foldername/reports/$line.html
+  echo "nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443,19000,19080" >> ./$1/$foldername/reports/$line.html
+  nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443,19000,19080 $line >> ./$1/$foldername/reports/$line.html
   echo "</pre></div>" >> ./$1/$foldername/reports/$line.html
 
 
@@ -108,13 +132,11 @@ report(){
 logo(){
   #can't have a bash script without a cool logo :D
   echo "
-
   _     ____  ____ ___  _ ____  _____ ____ ____  _
  / \   /  _ \/_   \\  \///  __\/  __//   _Y  _ \/ \  /|
  | |   | / \| /   / \  / |  \/||  \  |  / | / \|| |\ ||
  | |_/\| |-||/   /_ / /  |    /|  /_ |  \_| \_/|| | \||
  \____/\_/ \|\____//_/   \_/\_\\____\\____|____/\_/  \|
-
                                                       "
 }
 
@@ -131,10 +153,13 @@ main(){
   mkdir ./$1/$foldername
   mkdir ./$1/$foldername/reports/
   mkdir ./$1/$foldername/screenshots/
+  touch ./$1/$foldername/hosts.txt
+  touch ./$1/$foldername/mancheck.txt
   touch ./$1/$foldername/unreachable.html
   touch ./$1/$foldername/responsive-$(date +"%Y-%m-%d").txt
 
     recon $1
+        hosting $1
 }
 logo
 if [[ -z $@ ]]; then
