@@ -24,12 +24,12 @@ This script is intended to automate your reconnaissance process in an organized 
 - Generate a HTML report with output from the tools above
 # Added features
 - Resolve subdomains and export to txt file in hosts.txt
-- Color codes for status codes in report.html for easier reading
+- Color coding in report.html for easier reading
 - Added additional ports for nmap scan to detect azure cluster services
 - Added check for dns records that points to azure/aws for possible subdmonain takeovers (manual check is required)
 
 # More Features to be added
-- Report suspicious redirects 
+- Report suspicious redirects when doing content discovery 
 - Massdns subdomain discovery
 - Automate subdomain takeover detection on azure/aws
 
