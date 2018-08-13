@@ -58,7 +58,7 @@ hosting() {
  done
  cat ./$1/$foldername/hosts.txt | while read line; do
  if [[ "$line" ==  *NXDOMAIN* ]]; then
- $nnline >> mancheck.txt
+ $line >> mancheck.txt
  echo "$line require manual check"
  fi
  done
