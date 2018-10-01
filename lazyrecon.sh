@@ -73,7 +73,7 @@ report(){
   echo "</pre>   </div>" >> ./$1/$foldername/reports/$line.html
 
   echo "     <div class=\"col-sm-6\">" >> ./$1/$foldername/reports/$line.html
-  echo "<div style=\"font-family: 'Mina', serif;\"><h2>Screeshot</h2></div>" >> ./$1/$foldername/reports/$line.html
+  echo "<div style=\"font-family: 'Mina', serif;\"><h2>Screenshot</h2></div>" >> ./$1/$foldername/reports/$line.html
   echo "<pre>" >> ./$1/$foldername/reports/$line.html
   echo "Port 80                              Port 443" >> ./$1/$foldername/reports/$line.html
   echo "<img/src=\"../screenshots/http-$line-80.png\" style=\"max-width: 500px;\"> <img/src=\"../screenshots/https-$line-443.png\" style=\"max-width: 500px;\"> <br>" >> ./$1/$foldername/reports/$line.html
