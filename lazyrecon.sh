@@ -97,7 +97,8 @@ report(){
   echo "<div style=\"font-family: 'Mina', serif;\"><h1>Nmap Results</h1></div>" >> ./$1/$foldername/reports/$line.html
   echo "<pre>" >> ./$1/$foldername/reports/$line.html
   echo "nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443" >> ./$1/$foldername/reports/$line.html
-  nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443 $line >> ./$1/$foldername/reports/$line.html
+  nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443 $line >> ./$1/$foldername/nmap/nmap.$line
+  cat ./$1/$foldername/nmap/nmap.$line >> ./$1/$foldername/reports/$line.html
   echo "</pre></div>" >> ./$1/$foldername/reports/$line.html
 
 
@@ -130,6 +131,7 @@ main(){
   fi
   mkdir ./$1/$foldername
   mkdir ./$1/$foldername/reports/
+  mkdir ./$1/$foldername/nmap/
   mkdir ./$1/$foldername/screenshots/
   touch ./$1/$foldername/unreachable.html
   touch ./$1/$foldername/responsive-$(date +"%Y-%m-%d").txt
