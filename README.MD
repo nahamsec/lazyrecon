@@ -12,6 +12,9 @@
 `./lazyrecon.sh target.com`
 ![Example Output](https://github.com/plenumlab/lazyrecon/blob/master/Lazyrecon1.jpg)
 
+# LazyRecon is now powered by Massdns and can pull way more subdomains than you think
+Subdomain discovery using Sublist3r, certspotter, crt.sh and massdns
+
 # About
 
 This script is intended to automate your reconnaissance process in an organized fashion by performing the following:
@@ -24,6 +27,9 @@ This script is intended to automate your reconnaissance process in an organized 
 - Perform dirsearch 
 - Generate a HTML report with output from the tools above
 - Color coding in report.html for easier reading
+
+
+
 # Added features
 - Massdns subdomain discovery
 - Massdns crt.sh subdomain discovery
@@ -38,7 +44,9 @@ This requires Massdns installed in the root directory https://github.com/blechsc
 
 Make sure you download all.zip and unzip it before using the script the file all.txt is a huge wordlist used by massdns.
 
-
+# To be added
+- For instance the script handles wildcard dns very poorly this is going to be addressed next
+- Changes in dns records that may reveal a subdomain take over
 
 **Warning:** This code was originally created for personal use for myself, so it's  a bit messy and hopefully it'll be cleaned up with more features in a later release. 
 
