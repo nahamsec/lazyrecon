@@ -32,8 +32,10 @@ This script is intended to automate your reconnaissance process in an organized 
 
 # Requirements
 This requires [Bug Bounty Hunting Tools](https://github.com/nahamsec/bbht) in order for the tools to work. 
-This requires Massdns installed in the root directory https://github.com/blechschmidt/massdns
-Make sure you download all.txt file its a huge wordlist used by massdns
+
+This requires Massdns installed in the root directory https://github.com/blechschmidt/massdns.
+
+Make sure you download all.txt file its a huge wordlist used by massdns.
 
 
 
