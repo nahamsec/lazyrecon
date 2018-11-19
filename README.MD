@@ -22,18 +22,20 @@ This script is intended to automate your reconnaissance process in an organized 
 - Perform nmap 
 - Perform dirsearch 
 - Generate a HTML report with output from the tools above
-# Added features
-- Resolve subdomains and export to txt file in hosts.txt
 - Color coding in report.html for easier reading
-- Added additional ports for nmap scan to detect azure cluster services
-- Added check for dns records that points to azure/aws for possible subdmonain takeovers (manual check is required)
-
-# More Features to be added
-- Report suspicious redirects when doing content discovery 
+# Added features
 - Massdns subdomain discovery
-- Automate subdomain takeover detection on azure/aws
+- Massdns crt.sh subdomain discovery
+- Find dead dns records 
+- Notify for possible NS Subdomain takeover
+- Improved reporting and less output while doing the work
 
+# Requirements
 This requires [Bug Bounty Hunting Tools](https://github.com/nahamsec/bbht) in order for the tools to work. 
+This requires Massdns installed in the root directory https://github.com/blechschmidt/massdns
+Make sure you download all.txt file its a huge wordlist used by massdns
+
+
 
 **Warning:** This code was originally created for personal use for myself, so it's  a bit messy and hopefully it'll be cleaned up with more features in a later release. 
 
