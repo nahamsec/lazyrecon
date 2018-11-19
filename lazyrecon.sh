@@ -66,7 +66,7 @@ crtsh(){
  ~/massdns/scripts/ct.py $1 | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S -w  ./$1/$foldername/crtsh.txt
 }
 mass(){
- ~/massdns/scripts/subbrute.py ~/massdns/all.txt $1 | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$1/$foldername/mass.txt 
+ ~/massdns/scripts/subbrute.py ./all.txt $1 | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$1/$foldername/mass.txt 
 }
 nsrecords(){    
 		echo "Started dns records check ..."
