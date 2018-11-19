@@ -36,7 +36,7 @@ This requires [Bug Bounty Hunting Tools](https://github.com/nahamsec/bbht) in or
 
 This requires Massdns installed in the root directory https://github.com/blechschmidt/massdns.
 
-Make sure you download all.txt file its a huge wordlist used by massdns.
+Make sure you download all.zip and unzip it before using the script the file all.txt is a huge wordlist used by massdns.
 
 
 
