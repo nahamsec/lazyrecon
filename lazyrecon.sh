@@ -21,7 +21,14 @@ cleanup(){
 }
 
 hostalive(){
-  cat ./$1/$foldername/$1.txt && cat ./$1/$foldername/mass.txt && cat ./$1/$foldername/crtsh.txt | awk '{print $1}' | sort -u | while read line; do
+  cat ./$1/$foldername/$1.txt > ./$1/$foldername/alldomains.txt
+  cat ./$1/$foldername/mass.txt >> ./$1/$foldername/temp.txt
+  cat ./$1/$foldername/crtsh.txt >> ./$1/$foldername/temp.txt
+  cat ./$1/$foldername/temp.txt | awk  '{print $1}' | while read line; do
+ x="$line"
+  echo "${x%?}" >> ./$1/$foldername/alldomains.txt  
+done
+ 	cat ./$1/$foldername/alldomains.txt | sort -u | while read line; do
     if [ $(curl --write-out %{http_code} --silent --output /dev/null -m 5 $line) = 000 ]
     then
       echo "$line was unreachable"
@@ -43,9 +50,8 @@ recon(){
 echo "Recon started.."
 echo "Listing subdomains using sublister..."
   python ~/tools/Sublist3r/sublist3r.py -d $1 -t 10 -v -o ./$1/$foldername/$1.txt > /dev/null
-echo "Checking certspotter..."
+echo "Checking cerspotter..."
   curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $1 >> ./$1/$foldername/$1.txt
-echo "Starting DNS Records Checks..."
   nsrecords $1
 echo "Starting discovery..."
   discovery $1
@@ -57,27 +63,31 @@ dirsearcher(){
   python3 ~/tools/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar,sql -u $line
 }
 crtsh(){
- ~/massdns/scripts/ct.py $1 | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -o S -w  ./$1/$foldername/crtsh.txt
+ ~/massdns/scripts/ct.py $1 | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S -w  ./$1/$foldername/crtsh.txt
 }
 mass(){
- ~/massdns/scripts/subbrute.py ./all.txt $1 | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$1/$foldername/mass.txt 
+ ~/massdns/scripts/subbrute.py ~/massdns/all.txt $1 | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$1/$foldername/mass.txt 
 }
 nsrecords(){    
-				
-		crtsh $1
-		mass $1
+		echo "Started dns records check ..."
+		echo "Checking http://crt.sh"
+		crtsh $1 > /dev/null
+		echo "Starting Massdns Subdomain discovery this may take a while"
+		mass $1 > /dev/null
+		echo "Massdns finished..."
                 cat ./$1/$foldername/mass.txt | grep CNAME >> ./$1/$foldername/cnames.txt
                 cat ./$1/$foldername/crtsh.txt | grep CNAME >> ./$1/$foldername/cnames.txt
                 cat ./$1/$foldername/cnames.txt | sort -u | while read line; do
                 hostrec=$(echo "$line" | awk '{print $1}')
                 if [[ $(host $hostrec | grep NXDOMAIN) != "" ]]
                 then
-                echo "check the following domain for NS takeover:  $line"
+                echo "Check the following domain for NS takeover:  $line"
                 echo "$line" >> ./$1/$foldername/pos.txt
                 else
                 echo -ne "working on it...\r"
                 fi
                 done
+		sleep 1 
 				}
 
 report(){
@@ -99,13 +109,13 @@ report(){
   cat ~/tools/dirsearch/reports/$line/* | while read nline; do
   status_code=$(echo "$nline" | awk '{print $1}')
   if [[ "$status_code" == *20[012345678]* ]]; then
-    echo "<span style='background-color:#00f93645;'>$nline</span>" >> ./$1/$foldername/reports/$line.html
+    echo "<span style='background-color:#00f93645;'><a href='$nline'>$nline</a></span>" >> ./$1/$foldername/reports/$line.html
   elif [[ "$status_code" == *30[012345678]* ]]; then
-        echo "<span style='background-color:#f9f10045;'>$nline</span>" >> ./$1/$foldername/reports/$line.html
+        echo "<span style='background-color:#f9f10045;'><a href='$nline'>$nline</a></span>" >> ./$1/$foldername/reports/$line.html
   elif [[ "$status_code" == *40[012345678]* ]]; then
-        echo "<span style='background-color:#0000cc52;'>$nline</span>" >> ./$1/$foldername/reports/$line.html
+        echo "<span style='background-color:#0000cc52;'><a href='$nline'>$nline</a></span>" >> ./$1/$foldername/reports/$line.html
   elif [[ "$status_code" == *50[012345678]* ]]; then
-        echo "<span style='background-color:#f9000045;'>$nline</span>" >> ./$1/$foldername/reports/$line.html
+        echo "<span style='background-color:#f9000045;'><a href='$nline'>$nline</a></span>" >> ./$1/$foldername/reports/$line.html
   else
     echo "<span>$line</span>" >> ./$1/$foldername/reports/$line.html
   fi
@@ -180,11 +190,15 @@ main(){
   touch ./$1/$foldername/mass.txt
   touch ./$1/$foldername/cnames.txt
   touch ./$1/$foldername/pos.txt
-
-  touch ./$1/$foldername/unreachable.html
+ touch ./$1/$foldername/alldomains.txt
+  touch ./$1/$foldername/temp.txt 
+ touch ./$1/$foldername/unreachable.html
   touch ./$1/$foldername/responsive-$(date +"%Y-%m-%d").txt
 
   recon $1
+rm ./$1/$foldername/temp.txt
+
+
     
 }
 logo
