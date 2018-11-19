@@ -10,6 +10,7 @@
 # Usage
 
 `./lazyrecon.sh target.com`
+![Example Output](https://github.com/plenumlab/lazyrecon/blob/master/Lazyrecon1.jpg)
 
 # About
 
