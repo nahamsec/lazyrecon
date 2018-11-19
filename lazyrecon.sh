@@ -21,7 +21,7 @@ cleanup(){
 }
 
 hostalive(){
-  cat ./$1/$foldername/$1.txt | sort -u | while read line; do
+  cat ./$1/$foldername/$1.txt && cat ./$1/$foldername/mass.txt && cat ./$1/$foldername/crtsh.txt | awk '{print $1}' | sort -u | while read line; do
     if [ $(curl --write-out %{http_code} --silent --output /dev/null -m 5 $line) = 000 ]
     then
       echo "$line was unreachable"
@@ -40,9 +40,14 @@ screenshot(){
 }
 
 recon(){
-
-  python ~/tools/Sublist3r/sublist3r.py -d $1 -t 10 -v -o ./$1/$foldername/$1.txt
+echo "Recon started.."
+echo "Listing subdomains using sublister..."
+  python ~/tools/Sublist3r/sublist3r.py -d $1 -t 10 -v -o ./$1/$foldername/$1.txt > /dev/null
+echo "Checking cerspotter..."
   curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $1 >> ./$1/$foldername/$1.txt
+echo "Starting DNS Records Checks..."
+  nsrecords $1
+echo "Starting discovery..."
   discovery $1
   cat ./$1/$foldername/$1.txt | sort -u > ./$1/$foldername/$1.txt
 
@@ -51,18 +56,29 @@ recon(){
 dirsearcher(){
   python3 ~/tools/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar,sql -u $line
 }
-hosting() {
- cat ./$1/$foldername/$1.txt | while read line; do
- host $line >> hosts.txt
- echo "-----------------------------------" >> hosts.txt
- done
- cat ./$1/$foldername/hosts.txt | while read line; do
- if [[ "$line" ==  *NXDOMAIN* ]]; then
- $line >> mancheck.txt
- echo "$line require manual check"
- fi
- done
+crtsh(){
+ ~/massdns/scripts/ct.py $1 | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -o S -w  ./$1/$foldername/crtsh.txt
 }
+mass(){
+ ~/massdns/scripts/subbrute.py ~/massdns/all.txt $1 | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$1/$foldername/mass.txt 
+}
+nsrecords(){    
+				
+		crtsh $1
+		mass $1
+                cat ./$1/$foldername/mass.txt | grep CNAME >> ./$1/$foldername/cnames.txt
+                cat ./$1/$foldername/crtsh.txt | grep CNAME >> ./$1/$foldername/cnames.txt
+                cat ./$1/$foldername/cnames.txt | sort -u | while read line; do
+                hostrec=$(echo "$line" | awk '{print $1}')
+                if [[ $(host $hostrec | grep NXDOMAIN) != "" ]]
+                then
+                echo "check the following domain for NS takeover:  $line"
+                echo "$line" >> ./$1/$foldername/pos.txt
+                else
+                echo -ne "working on it...\r"
+                fi
+                done
+				}
 
 report(){
   touch ./$1/$foldername/reports/$line.html
@@ -122,6 +138,13 @@ report(){
   echo "<pre style='display: block;'>" >> ./$1/$foldername/reports/$line.html
   echo "nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443,19000,19080" >> ./$1/$foldername/reports/$line.html
   nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443,19000,19080 $line >> ./$1/$foldername/reports/$line.html
+  echo "</pre>">> ./$1/$foldername/reports/$line.html
+  
+  echo "<div style=\"font-family: 'Mina', serif;\"><h2>Dead NSRECORDS</h2></div>" >> ./$1/$foldername/reports/$line.html
+  echo "<pre style='display: block;'>" >> ./$1/$foldername/reports/$line.html
+  cat ./$1/$foldername/pos.txt | while read ns; do 
+  echo "<span>$ns</span>" >> ./$1/$foldername/reports/$line.html
+  done
   echo "</pre></div>" >> ./$1/$foldername/reports/$line.html
 
 
@@ -153,13 +176,16 @@ main(){
   mkdir ./$1/$foldername
   mkdir ./$1/$foldername/reports/
   mkdir ./$1/$foldername/screenshots/
-  touch ./$1/$foldername/hosts.txt
-  touch ./$1/$foldername/mancheck.txt
+  touch ./$1/$foldername/crtsh.txt
+  touch ./$1/$foldername/mass.txt
+  touch ./$1/$foldername/cnames.txt
+  touch ./$1/$foldername/pos.txt
+
   touch ./$1/$foldername/unreachable.html
   touch ./$1/$foldername/responsive-$(date +"%Y-%m-%d").txt
 
-    recon $1
-        hosting $1
+  recon $1
+    
 }
 logo
 if [[ -z $@ ]]; then
