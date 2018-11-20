@@ -180,7 +180,7 @@ master_report()
 
 
   echo "<div style=\"font-family: 'Mina', serif;\"><h2>Dig Info</h2></div>" >> ./$1/$foldername/master_report.html
-  echo "<pre style='display: block;'>" >> ./$1/$foldername/reports/$line.html
+  echo "<pre style='display: block;'>" >> ./$1/$foldername/master_report.html
   dig $line >> ./$1/$foldername/master_report.html
   echo "</pre>" >> ./$1/$foldername/master_report.html
 
