@@ -171,13 +171,27 @@ master_report()
   echo "     <div style=\"font-family: 'Mina', serif;\"><h2>Total scanned subdomains</h2></div>" >> ./$1/$foldername/master_report.html
   
   echo "<pre style='display: block;'>" >> ./$1/$foldername/master_report.html
-  
-  echo "SubDomains                   Scanned Urls" >> ./$1/$foldername/master_report.html
+  echo "     <div class=\"col-sm-6\">" >> ./$1/$foldername/master_report.html
+  echo "SubDomains                          Scanned Urls" >> ./$1/$foldername/master_report.html
+ 
   cat ./$1/$foldername/responsive-$(date +"%Y-%m-%d").txt | while read nline; do
-
-  echo "<span><a href='./reports/$nline.html'>$nline</a></span><span>            $(wc -l ~/tools/dirsearch/reports/$nline/* | awk '{print $1}')</span>" >> ./$1/$foldername/master_report.html
-
+  echo "<span><a href='./reports/$nline.html'>$nline</a></span>" >> ./$1/$foldername/master_report.html
   done
+  echo "</div>" >> ./$1/$foldername/master_report.html
+  echo "     <div class=\"col-sm-6\">" >> ./$1/$foldername/master_report.html
+
+  cat ./$1/$foldername/responsive-$(date +"%Y-%m-%d").txt | while read nline; do
+  echo "<span>$(wc -l ~/tools/dirsearch/reports/$nline/* | awk '{print $1}')</span>" >> ./$1/$foldername/master_report.html
+  done
+  echo "</div>" >> ./$1/$foldername/master_report.html
+  
+  echo "</pre>" >> ./$1/$foldername/master_report.html
+   
+  echo "<div style=\"font-family: 'Mina', serif;\"><h2>Possible NS Takeovers</h2></div>" >> ./$1/$foldername/master_report.html
+  echo "<pre style='display: block;'>" >> ./$1/$foldername/master_report.html
+  cat ./$1/$foldername/pos.txt | while read ns; do 
+  echo "<span>$ns</span>" >> ./$1/$foldername/master_report.html
+  done 
   echo "</pre></div>" >> ./$1/$foldername/master_report.html
 
   echo "     <div class=\"col-sm-6\">" >> ./$1/$foldername/master_report.html
@@ -201,13 +215,8 @@ master_report()
   echo "nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443,19000,19080" >> ./$1/$foldername/master_report.html
   nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443,19000,19080 $1 >> ./$1/$foldername/master_report.html
   echo "</pre>">> ./$1/$foldername/master_report.html
-  
-  echo "<div style=\"font-family: 'Mina', serif;\"><h2>Dead NSRECORDS</h2></div>" >> ./$1/$foldername/master_report.html
-  echo "<pre style='display: block;'>" >> ./$1/$foldername/master_report.html
-  cat ./$1/$foldername/pos.txt | while read ns; do 
-  echo "<span>$ns</span>" >> ./$1/$foldername/master_report.html
-  done
-  echo "</pre></div>" >> ./$1/$foldername/master_report.html
+
+  echo "</div>" >> ./$1/$foldername/master_report.html
 
 
   echo "</html>" >> ./$1/$foldername/master_report.html
