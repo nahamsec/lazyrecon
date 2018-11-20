@@ -108,14 +108,15 @@ report(){
   echo "<pre style='display: block;'>" >> ./$1/$foldername/reports/$line.html
   cat ~/tools/dirsearch/reports/$line/* | while read nline; do
   status_code=$(echo "$nline" | awk '{print $1}')
+  url=$(echo "$nline" | awk '{print $3}')
   if [[ "$status_code" == *20[012345678]* ]]; then
-    echo "<span style='background-color:#00f93645;'><a href='$nline'>$nline</a></span>" >> ./$1/$foldername/reports/$line.html
+    echo "<span style='background-color:#00f93645;'><a href='$url'>$nline</a></span>" >> ./$1/$foldername/reports/$line.html
   elif [[ "$status_code" == *30[012345678]* ]]; then
-        echo "<span style='background-color:#f9f10045;'><a href='$nline'>$nline</a></span>" >> ./$1/$foldername/reports/$line.html
+        echo "<span style='background-color:#f9f10045;'><a href='$url'>$nline</a></span>" >> ./$1/$foldername/reports/$line.html
   elif [[ "$status_code" == *40[012345678]* ]]; then
-        echo "<span style='background-color:#0000cc52;'><a href='$nline'>$nline</a></span>" >> ./$1/$foldername/reports/$line.html
+        echo "<span style='background-color:#0000cc52;'><a href='$url'>$nline</a></span>" >> ./$1/$foldername/reports/$line.html
   elif [[ "$status_code" == *50[012345678]* ]]; then
-        echo "<span style='background-color:#f9000045;'><a href='$nline'>$nline</a></span>" >> ./$1/$foldername/reports/$line.html
+        echo "<span style='background-color:#f9000045;'><a href='$url'>$nline</a></span>" >> ./$1/$foldername/reports/$line.html
   else
     echo "<span>$line</span>" >> ./$1/$foldername/reports/$line.html
   fi
