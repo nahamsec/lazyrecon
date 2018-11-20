@@ -171,14 +171,14 @@ master_report()
   echo "     <div style=\"font-family: 'Mina', serif;\"><h2>Total scanned subdomains</h2></div>" >> ./$1/$foldername/master_report.html
   
   echo "<pre style='display: block;'>" >> ./$1/$foldername/master_report.html
-  echo "     <div class=\"col-sm-6\">" >> ./$1/$foldername/master_report.html
+  echo "<div class=\"col-sm-6\">" >> ./$1/$foldername/master_report.html
   echo "SubDomains                          Scanned Urls" >> ./$1/$foldername/master_report.html
  
   cat ./$1/$foldername/responsive-$(date +"%Y-%m-%d").txt | while read nline; do
   echo "<span><a href='./reports/$nline.html'>$nline</a></span>" >> ./$1/$foldername/master_report.html
   done
   echo "</div>" >> ./$1/$foldername/master_report.html
-  echo "     <div class=\"col-sm-6\">" >> ./$1/$foldername/master_report.html
+  echo "<div class=\"col-sm-6\">" >> ./$1/$foldername/master_report.html
 
   cat ./$1/$foldername/responsive-$(date +"%Y-%m-%d").txt | while read nline; do
   echo "<span>$(wc -l ~/tools/dirsearch/reports/$nline/* | awk '{print $1}')</span>" >> ./$1/$foldername/master_report.html
@@ -194,7 +194,7 @@ master_report()
   done 
   echo "</pre></div>" >> ./$1/$foldername/master_report.html
 
-  echo "     <div class=\"col-sm-6\">" >> ./$1/$foldername/master_report.html
+  echo "<div class=\"col-sm-6\">" >> ./$1/$foldername/master_report.html
   echo "<div style=\"font-family: 'Mina', serif;\"><h2>Dig Info</h2></div>" >> ./$1/$foldername/master_report.html
   echo "<pre style='display: block;'>" >> ./$1/$foldername/master_report.html
   dig $line >> ./$1/$foldername/master_report.html
