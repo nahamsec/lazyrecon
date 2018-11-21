@@ -14,8 +14,8 @@ while getopts "sd:" o; do
             ;;
         s)
             urlscheme=https
-	    curlflag=-k
-	    port=443
+            curlflag=-k
+            port=443
             ;;
         *)
             usage
@@ -52,14 +52,6 @@ cleanup(){
 }
 
 hostalive(){
-
-  cat ./$domain/$foldername/$domain.txt > ./$domain/$foldername/alldomains.txt
-  cat ./$domain/$foldername/mass.txt >> ./$domain/$foldername/temp.txt
-  cat ./$domain/$foldername/crtsh.txt >> ./$domain/$foldername/temp.txt
-  cat ./$domain/$foldername/temp.txt | awk  '{print $1}' | while read line; do
- x="$line"
-  echo "${x%?}" >> ./$domain/$foldername/alldomains.txt  
-done
 
   cat ./$domain/$foldername/alldomains.txt  | sort -u | while read line; do
     if [ $(curl --write-out %{http_code} --silent --output /dev/null -m 5 $curlflag $urlscheme://$line) = 000 ]
@@ -102,18 +94,23 @@ crtsh(){
  ~/massdns/scripts/ct.py $domain | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S -w  ./$domain/$foldername/crtsh.txt
 }
 mass(){
- ~/massdns/scripts/subbrute.py ./all.txt $domain | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$domain/$foldername/mass.txt 
+ ~/massdns/scripts/subbrute.py ./all.txt $domain | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$domain/$foldername/mass.txt
 }
-nsrecords(){    
-		echo "Started dns records check ..."
-		echo "Checking http://crt.sh"
-		crtsh $domain > /dev/null
-		echo "Starting Massdns Subdomain discovery this may take a while"
-		mass $domain > /dev/null
-		echo "Massdns finished..."
-    echo "Looking into CNAME Records..."
-                cat ./$domain/$foldername/mass.txt | grep CNAME >> ./$domain/$foldername/cnames.txt
-                cat ./$domain/$foldername/crtsh.txt | grep CNAME >> ./$domain/$foldername/cnames.txt
+nsrecords(){
+                echo "Started dns records check ..."
+                echo "Checking http://crt.sh"
+                crtsh $domain > /dev/null
+                echo "Starting Massdns Subdomain discovery this may take a while"
+                mass $domain > /dev/null
+                echo "Massdns finished..."
+                echo "Looking into CNAME Records..."
+                cat ./$domain/$foldername/mass.txt >> ./$domain/$foldername/temp.txt
+                cat ./$domain/$foldername/crtsh.txt >> ./$domain/$foldername/temp.txt
+                cat ./$domain/$foldername/temp.txt | awk '{print $3}' | sort -u | while read line; do
+                wildcard=$(cat ./$domain/$foldername/temp.txt | grep -m 1 $line)
+                echo "$wildcard" >> ./$domain/$foldername/cleantemp.txt
+                done
+                cat ./$domain/$foldername/cleantemp.txt | grep CNAME >> ./$domain/$foldername/cnames.txt
                 cat ./$domain/$foldername/cnames.txt | sort -u | while read line; do
                 hostrec=$(echo "$line" | awk '{print $1}')
                 if [[ $(host $hostrec | grep NXDOMAIN) != "" ]]
@@ -124,8 +121,16 @@ nsrecords(){
                 echo -ne "working on it...\r"
                 fi
                 done
-		sleep 1 
-				}
+                sleep 1
+                cat ./$domain/$foldername/$domain.txt > ./$domain/$foldername/alldomains.txt
+                cat ./$domain/$foldername/cleantemp.txt | awk  '{print $1}' | while read line; do
+                x="$line"
+                echo "${x%?}" >> ./$domain/$foldername/alldomains.txt
+                done
+                echo  "Total of $(wc -l ./$domain/$foldername/alldomains.txt | awk '{print $1}') subdomains were found"
+                sleep 1
+
+        }
 
 report(){
 
@@ -192,7 +197,7 @@ done
   echo "nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443,19000,19080" >> ./$domain/$foldername/reports/$line.html
   nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443,19000,19080 $line >> ./$domain/$foldername/reports/$line.html
   echo "</pre>">> ./$domain/$foldername/reports/$line.html
-  
+
 
 
   echo "</html>" >> ./$domain/$foldername/reports/$line.html
@@ -212,11 +217,11 @@ master_report()
 
   echo "<div class=\"col-sm-6\">" >> ./$domain/$foldername/master_report.html
   echo "<div style=\"font-family: 'Mina', serif;\"><h2>Total scanned subdomains</h2></div>" >> ./$domain/$foldername/master_report.html
-  
+
   echo "<pre style='display: block;'>" >> ./$domain/$foldername/master_report.html
   echo "<div class=\"col-sm-6\">" >> ./$domain/$foldername/master_report.html
   echo "SubDomains" >> ./$domain/$foldername/master_report.html
- 
+
   cat ./$domain/$foldername/responsive-$(date +"%Y-%m-%d").txt | while read nline; do
   echo "<span><a href='./reports/$nline.html'>$nline</a></span>" >> ./$domain/$foldername/master_report.html
   done
@@ -228,12 +233,12 @@ master_report()
   done
   echo "</div>" >> ./$domain/$foldername/master_report.html
   echo "</pre>" >> ./$domain/$foldername/master_report.html
-   
+
   echo "<div style=\"font-family: 'Mina', serif;\"><h2>Possible NS Takeovers</h2></div>" >> ./$domain/$foldername/master_report.html
   echo "<pre style='display: block;'>" >> ./$domain/$foldername/master_report.html
-  cat ./$domain/$foldername/pos.txt | while read ns; do 
+  cat ./$domain/$foldername/pos.txt | while read ns; do
   echo "<span>$ns</span>" >> ./$domain/$foldername/master_report.html
-  done 
+  done
   echo "</pre></div>" >> ./$domain/$foldername/master_report.html
 
   echo "<div class=\"col-sm-6\">" >> ./$domain/$foldername/master_report.html
@@ -262,7 +267,7 @@ master_report()
 
 
   echo "</html>" >> ./$domain/$foldername/master_report.html
-  
+
   echo "Scan for $domain finished successfully"
 }
 
@@ -296,7 +301,8 @@ main(){
   touch ./$domain/$foldername/cnames.txt
   touch ./$domain/$foldername/pos.txt
   touch ./$domain/$foldername/alldomains.txt
-  touch ./$domain/$foldername/temp.txt 
+  touch ./$domain/$foldername/temp.txt
+  touch ./$domain/$foldername/cleantemp.txt
   touch ./$domain/$foldername/unreachable.html
   touch ./$domain/$foldername/responsive-$(date +"%Y-%m-%d").txt
   touch ./$domain/$foldername/master_report.html
@@ -304,10 +310,11 @@ main(){
   recon $domain
   master_report $domain
   rm ./$domain/$foldername/temp.txt
+  rm ./$domain/$foldername/cleantemp.txt
 
 
 
-    
+
 
 }
 logo
