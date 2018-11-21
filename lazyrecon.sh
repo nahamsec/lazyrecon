@@ -50,7 +50,7 @@ recon(){
   echo "Recon started..."
   echo "Listing subdomains using sublister..."
   python ~/tools/Sublist3r/sublist3r.py -d $1 -t 10 -v -o ./$1/$foldername/$1.txt > /dev/null
-  echo "Checking cerspotter..."
+  echo "Checking certspotter..."
   curl -s https://certspotter.com/api/v0/certs\?domain\=$1 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $1 >> ./$1/$foldername/$1.txt
   nsrecords $1
   echo "Starting discovery..."
