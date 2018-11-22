@@ -10,7 +10,7 @@
 # Usage
 
 `./lazyrecon.sh target.com`
-![Example Output](https://github.com/plenumlab/lazyrecon/blob/master/Lazyrecon1.jpg)
+![Example Output](https://github.com/plenumlab/lazyrecon/blob/master/Lazyrecon2.jpg)
 
 # LazyRecon is now powered by Massdns and can pull way more subdomains than you think
 Subdomain discovery using Sublist3r, certspotter, crt.sh and massdns
