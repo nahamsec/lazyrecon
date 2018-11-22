@@ -36,11 +36,14 @@ This script is intended to automate your reconnaissance process in an organized 
 - Find dead dns records 
 - Notify for possible NS Subdomain takeover
 - Improved reporting and less output while doing the work
+- Find ip address space of target company
 
 # Requirements
 This requires [Bug Bounty Hunting Tools](https://github.com/nahamsec/bbht) in order for the tools to work. 
 
 This requires Massdns installed in the root directory https://github.com/blechschmidt/massdns.
+
+Get Asnlookup tool from https://github.com/yassineaboukir/asnlookup and install it into ~/tools/
 
 Make sure you download all.zip and unzip it before using the script the file all.txt is a huge wordlist used by massdns.
 
