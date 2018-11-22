@@ -3,7 +3,6 @@
 red=`tput setaf 1`
 green=`tput setaf 2`
 reset=`tput sgr0`
-bgw=`tput setab 7`
 
 urlscheme=http
 port=80
