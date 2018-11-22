@@ -1,5 +1,10 @@
 #!/bin/bash
 
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset=`tput sgr0`
+bgw=`tput setab 7`
+
 urlscheme=http
 port=80
 domain=
@@ -74,7 +79,7 @@ screenshot(){
 
 recon(){
 
-  echo "Recon started..."
+  echo "${green}Recon started on $domain ${reset}"
   echo "Listing subdomains using sublister..."
   python ~/tools/Sublist3r/sublist3r.py -d $domain -t 10 -v -o ./$domain/$foldername/$domain.txt > /dev/null
   echo "Checking certspotter..."
@@ -97,7 +102,7 @@ mass(){
  ~/massdns/scripts/subbrute.py ./all.txt $domain | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$domain/$foldername/mass.txt
 }
 nsrecords(){
-                echo "Started dns records check ..."
+                echo "${green}Started dns records check...${reset}"
                 echo "Checking http://crt.sh"
                 crtsh $domain > /dev/null
                 echo "Starting Massdns Subdomain discovery this may take a while"
@@ -115,7 +120,7 @@ nsrecords(){
                 hostrec=$(echo "$line" | awk '{print $1}')
                 if [[ $(host $hostrec | grep NXDOMAIN) != "" ]]
                 then
-                echo "Check the following domain for NS takeover:  $line"
+                echo "${red}Check the following domain for NS takeover:  $line ${reset}"
                 echo "$line" >> ./$domain/$foldername/pos.txt
                 else
                 echo -ne "working on it...\r"
@@ -127,7 +132,7 @@ nsrecords(){
                 x="$line"
                 echo "${x%?}" >> ./$domain/$foldername/alldomains.txt
                 done
-                echo  "Total of $(wc -l ./$domain/$foldername/alldomains.txt | awk '{print $1}') subdomains were found"
+                echo  "${green}Total of $(wc -l ./$domain/$foldername/alldomains.txt | awk '{print $1}') subdomains were found${reset}"
                 sleep 1
 
         }
@@ -268,18 +273,21 @@ master_report()
 
   echo "</html>" >> ./$domain/$foldername/master_report.html
 
-  echo "Scan for $domain finished successfully"
+  echo "${green}Scan for $domain finished successfully${reset}"
 }
 
 logo(){
   #can't have a bash script without a cool logo :D
-  echo "
-  _     ____  ____ ___  _ ____  _____ ____ ____  _
- / \   /  _ \/_   \\  \///  __\/  __//   _Y  _ \/ \  /|
- | |   | / \| /   / \  / |  \/||  \  |  / | / \|| |\ ||
- | |_/\| |-||/   /_ / /  |    /|  /_ |  \_| \_/|| | \||
- \____/\_/ \|\____//_/   \_/\_\\____\\____|____/\_/  \|
-                                                      "
+  echo "${red}
+  
+ _     ____  ____ ___  _ ____  _____ ____  ____  _     
+/ \   /  _ \/_   \\\  \///  __\/  __//   _\/  _ \/ \  /|
+| |   | / \| /   / \  / |  \/||  \  |  /  | / \|| |\ ||
+| |_/\| |-||/   /_ / /  |    /|  /_ |  \__| \_/|| | \||
+\____/\_/ \|\____//_/   \_/\_\\\____\\\____/\____/\_/  \\|
+                                                       
+
+${reset}                                                      "
 }
 
 main(){
