@@ -9,7 +9,7 @@
 
 # Usage
 
-`./lazyrecon.sh target.com`
+`./lazyrecon.sh -d target.com`
 ![Example Output](https://github.com/plenumlab/lazyrecon/blob/master/lazyrecon2.jpg)
 
 # LazyRecon is now powered by Massdns and can pull way more subdomains than you think
