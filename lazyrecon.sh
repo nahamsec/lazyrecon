@@ -84,10 +84,26 @@ recon(){
   echo "Checking certspotter..."
   curl -s https://certspotter.com/api/v0/certs\?domain\=$domain | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $domain >> ./$domain/$foldername/$domain.txt
   nsrecords $domain
+  echo "Looking up ipaddress space..."
+  asnlookup $domain
   echo "Starting discovery..."
   discovery $domain
   cat ./$domain/$foldername/$domain.txt | sort -u > ./$domain/$foldername/$domain.txt
+  
 
+}
+asnlookup(){
+ dm="$domain"
+ org=$(echo "${dm%%.*}")
+ 
+ python ~/tools/asnlookup/asnlookup.py -o $org |  grep -E "*/[0-9]" > ./$domain/$foldername/ipaddress.txt
+ 
+ if [[ -s "./$domain/$foldername/ipaddress.txt" ]]; then 
+    echo "${red}Ip address space found${reset}"
+    cat ./$domain/$foldername/ipaddress.txt
+    else 
+    echo "Could not find ip address space :/"; 
+    fi
 
 }
 
@@ -245,7 +261,13 @@ master_report()
   done
   echo "</pre></div>" >> ./$domain/$foldername/master_report.html
 
+
   echo "<div class=\"col-sm-6\">" >> ./$domain/$foldername/master_report.html
+  echo "<div style=\"font-family: 'Mina', serif;\"><h2>IP Address space for $domain</h2></div>" >> ./$domain/$foldername/master_report.html
+  echo "<pre style='display: block;'>" >> ./$domain/$foldername/master_report.html
+  cat ./$domain/$foldername/ipaddress.txt >> ./$domain/$foldername/master_report.html
+  echo "</pre>" >> ./$domain/$foldername/master_report.html
+  
   echo "<div style=\"font-family: 'Mina', serif;\"><h2>Dig Info</h2></div>" >> ./$domain/$foldername/master_report.html
   echo "<pre style='display: block;'>" >> ./$domain/$foldername/master_report.html
   dig $line >> ./$domain/$foldername/master_report.html
@@ -309,6 +331,7 @@ main(){
   touch ./$domain/$foldername/pos.txt
   touch ./$domain/$foldername/alldomains.txt
   touch ./$domain/$foldername/temp.txt
+  touch ./$domain/$foldername/ipaddress.txt
   touch ./$domain/$foldername/cleantemp.txt
   touch ./$domain/$foldername/unreachable.html
   touch ./$domain/$foldername/responsive-$(date +"%Y-%m-%d").txt
