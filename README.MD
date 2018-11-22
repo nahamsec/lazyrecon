@@ -48,7 +48,7 @@ Get Asnlookup tool from https://github.com/yassineaboukir/asnlookup and install 
 Make sure you download all.zip and unzip it before using the script the file all.txt is a huge wordlist used by massdns.
 
 # TO DO
-<s>- For instance the script handles wildcard dns very poorly this is going to be addressed next
+<s>- For instance the script handles wildcard dns very poorly this is going to be addressed next</s>
 - install.sh script
 - Changes in dns records that may reveal a subdomain take over
 
