@@ -12,8 +12,10 @@
 `./lazyrecon.sh -d target.com`
 ![Example Output](https://github.com/plenumlab/lazyrecon/blob/master/lazyrecon2.jpg)
 
-# LazyRecon is now powered by Massdns and can pull way more subdomains than you think
+# Lazyrecon updated
 Subdomain discovery using Sublist3r, certspotter, crt.sh and massdns
+Directory bruteforce with dirsearch
+45 thousands dns query and more than 80 thousands http requests in less than 10 minutes
 
 # About
 
@@ -27,10 +29,6 @@ This script is intended to automate your reconnaissance process in an organized 
 - Perform dirsearch 
 - Generate a HTML report with output from the tools above
 - Color coding in report.html for easier reading
-
-
-
-# Added features
 - Massdns subdomain discovery
 - Massdns crt.sh subdomain discovery
 - Find dead dns records 
@@ -38,19 +36,21 @@ This script is intended to automate your reconnaissance process in an organized 
 - Improved reporting and less output while doing the work
 - Find ip address space of target company
 
+# New features
+- Dirsearch is now MULTITHREADED (up to 10 subdomains scanned at a time)
+- Grab data from wayback and parse Get parameters to be imported into intruder or other tools
+- Grab javascript urls from wayback 
+- Grab any php, jsp or aspx url from wayback
+
+
+
 # Requirements
-This requires [Bug Bounty Hunting Tools](https://github.com/nahamsec/bbht) in order for the tools to work. 
-
-This requires Massdns installed in the root directory https://github.com/blechschmidt/massdns.
-
-Get Asnlookup tool from https://github.com/yassineaboukir/asnlookup and install it into ~/tools/
-
-Make sure you download all.zip and unzip it before using the script the file all.txt is a huge wordlist used by massdns.
+- Download the install script from https://github.com/nahamsec/bbht
 
 # TO DO
-<s>- For instance the script handles wildcard dns very poorly this is going to be addressed next</s>
-- install.sh script
-- Changes in dns records that may reveal a subdomain take over
+# ADD CREDIT TO ORIGINAL DEVS
+
+
 
 **Warning:** This code was originally created for personal use for myself, so it's  a bit messy and hopefully it'll be cleaned up with more features in a later release. 
 
