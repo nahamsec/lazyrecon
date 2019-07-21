@@ -2,6 +2,7 @@
 
 red=`tput setaf 1`
 green=`tput setaf 2`
+yellow=`tput setaf 3`
 reset=`tput sgr0`
 
 
@@ -32,27 +33,38 @@ if [ -z "${domain}" ] ; then
 fi
 
 discovery(){
-  hostalive $domain
-  screenshot $domain
-  cleanup $domain
-  cat ./$domain/$foldername/responsive-$(date +"%Y-%m-%d")-codes.txt | sort -u | while read line; do
-    sleep 1
-    subdomain=$(echo "$line" | awk '{print $1}')
-
-
-#we pass subdomain with port number to dirsearcher so we can define the right arguments
-
-    dirsearcher $line
-
-#we pass domain value and subdomain without port number to report
-
-    report $domain $subdomain
-    echo "report generated for $line "
-    sleep 1
-  done
+	hostalive $domain
+	screenshot $domain
+	cleanup $domain
+	waybackrecon $domain
+	dirsearcher 
+	echo "${reset}Starting report generation..."
+	cat ./$domain/$foldername/urllist.txt | sort -u | while read line; do
+		subdomain=$(echo $line | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g')
+		echo -ne "${yellow}[+] $subdomain :"
+		report $domain $subdomain
+		echo " ${green}DONE${reset}"
+	done
 
 }
+waybackrecon () {
+echo "Scraping wayback for data..."
+cat ./$domain/$foldername/urllist.txt | waybackurls > ./$domain/$foldername/wayback-data/waybackurls.txt 
+cat ./$domain/$foldername/wayback-data/waybackurls.txt  | sort -u | unfurl --unique keys > ./$domain/$foldername/wayback-data/paramlist.txt
+[ -s ./$domain/$foldername/wayback-data/paramlist.txt ] && echo "Wordlist saved to /$domain/$foldername/wayback-data/paramlist.txt" 
 
+cat ./$domain/$foldername/wayback-data/waybackurls.txt  | sort -u | grep -P "\w+\.js(\?|$)" | sort -u > ./$domain/$foldername/wayback-data/jsurls.txt
+[ -s ./$domain/$foldername/wayback-data/jsurls.txt ] && echo "JS Urls saved to /$domain/$foldername/wayback-data/jsurls.txt" 
+
+cat ./$domain/$foldername/wayback-data/waybackurls.txt  | sort -u | grep -P "\w+\.php(\?|$) | sort -u " > ./$domain/$foldername/wayback-data/phpurls.txt
+[ -s ./$domain/$foldername/wayback-data/phpurls.txt ] && echo "PHP Urls saved to /$domain/$foldername/wayback-data/phpurls.txt" 
+
+cat ./$domain/$foldername/wayback-data/waybackurls.txt  | sort -u | grep -P "\w+\.aspx(\?|$) | sort -u " > ./$domain/$foldername/wayback-data/aspxurls.txt
+[ -s ./$domain/$foldername/wayback-data/aspxurls.txt ] && echo "ASP Urls saved to /$domain/$foldername/wayback-data/aspxurls.txt" 
+
+cat ./$domain/$foldername/wayback-data/waybackurls.txt  | sort -u | grep -P "\w+\.jsp(\?|$) | sort -u " > ./$domain/$foldername/wayback-data/jspurls.txt
+[ -s ./$domain/$foldername/wayback-data/jspurls.txt ] && echo "JSP Urls saved to /$domain/$foldername/wayback-data/jspurls.txt" 
+}
 
 cleanup(){
   cd ./$domain/$foldername/screenshots/
@@ -61,32 +73,19 @@ cleanup(){
 }
 
 hostalive(){
+echo "Probing for live hosts..."
+cat ./$domain/$foldername/alldomains.txt | sort -u | httprobe -c 50 -t 3000 >> ./$domain/$foldername/responsive.txt
+cat ./$domain/$foldername/responsive.txt | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g' | sort -u | while read line; do
+probeurl=$(cat ./$domain/$foldername/responsive.txt | sort -u | grep -m 1 $line)
+echo "$probeurl" >> ./$domain/$foldername/urllist.txt
+done
+echo  "${yellow}Total of $(wc -l ./$domain/$foldername/urllist.txt | awk '{print $1}') live subdomains were found${reset}"
 
-#read from the file alldomains and check if host is alive on port 80 and 443 and save results in two files responsive-date.txt and responsive-date-codes.txt
-#the format of data in the file responsive-dates-codes.txt is as follows    test.example.com 443
-#we need to store the ports so we can pass arguments correctly to dirsearch
-
-  cat ./$domain/$foldername/alldomains.txt  | sort -u | while read line; do
-        httpcl=$(curl --write-out %{http_code} --silent --output /dev/null -m 5 http://$line)
-        httpssl=$(curl --write-out %{http_code} --silent --output /dev/null -m 5 -k https://$line)
-    if [[ $httpcl = 000 && $httpssl = 000 ]]; then
-      echo "$line was unreachable"
-      echo "$line" >> ./$domain/$foldername/unreachable.txt
-    elif [[ $httpcl = 000 && $httpssl != 000 ]]; then
-      echo "$line is up on port 443"
-      echo "$line 443" >> ./$domain/$foldername/responsive-$(date +"%Y-%m-%d")-codes.txt
-      echo "$line" >> ./$domain/$foldername/responsive-$(date +"%Y-%m-%d").txt
-    else
-      echo "$line is up on port 80"
-      echo "$line 80" >> ./$domain/$foldername/responsive-$(date +"%Y-%m-%d")-codes.txt
-      echo "$line" >> ./$domain/$foldername/responsive-$(date +"%Y-%m-%d").txt
-    fi
-  done
 }
 
 screenshot(){
-    echo "taking a screenshot of $line"
-    python ~/tools/webscreenshot/webscreenshot.py -o ./$domain/$foldername/screenshots/ -i ./$domain/$foldername/responsive-$(date +"%Y-%m-%d").txt --timeout=10 -m
+    echo "Taking screenshots..."
+    python ~/tools/webscreenshot/webscreenshot.py -o ./$domain/$foldername/screenshots/ -i ./$domain/$foldername/urllist.txt -w 10 --timeout=10 -m | grep -v ERROR | grep -v version | grep -v -e '^[[:space:]]*$'
 }
 
 recon(){
@@ -95,10 +94,10 @@ recon(){
   echo "Listing subdomains using sublister..."
   python ~/tools/Sublist3r/sublist3r.py -d $domain -t 10 -v -o ./$domain/$foldername/$domain.txt > /dev/null
   echo "Checking certspotter..."
-  curl -s https://certspotter.com/api/v0/certs\?domain\=$domain | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $domain >> ./$domain/$foldername/$domain.txt
+  curl -s https://certspotter.com/api/v0/certs\?domain\=$domain | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u |grep $domain >> ./$domain/$foldername/$domain.txt
   nsrecords $domain
-  echo "Looking up ipaddress space..."
-  asnlookup $domain
+  #echo "Looking up ipaddress space..."
+  #asnlookup $domain
   echo "Starting discovery..."
   discovery $domain
   cat ./$domain/$foldername/$domain.txt | sort -u > ./$domain/$foldername/$domain.txt
@@ -106,14 +105,8 @@ recon(){
 
 }
 asnlookup(){
-#find ip address space of organization this is not bulletproof but it should work for now
-
-
  dm="$domain"
  org=$(echo "${dm%%.*}")
-#get domain and remove .* example if we pass hackerone.com this will remove .com and the result would be hackerone
-#we will use this to run asnlookup results will be stored to ipaddress.txt
-
  python ~/tools/asnlookup/asnlookup.py -o $org |  grep -E "*/[0-9]" > ./$domain/$foldername/ipaddress.txt
 
  if [[ -s "./$domain/$foldername/ipaddress.txt" ]]; then
@@ -123,72 +116,53 @@ asnlookup(){
     echo "Could not find ip address space :/";
     fi
 
+
 }
 
 dirsearcher(){
 
-#now that we have the subdomain with port 80/443 we can do simple check and then set urlscheme http or https
-#note that if target is alive on both ports dirsearcher will default to port 80
-#this is not bulletproof as it might overload the server because of concurrent connections on https  considering to implement other tools instead turbo intruder/ gobuster
-  statcode=$(echo "$line" | awk '{print $2}')
-  if [[ "$statcode" == "80" ]]; then
-  urlscheme=http
-  else
-  urlscheme=https
-  fi
-  testdm=$(echo "$line" | awk '{print $1}')
-
-  python3 ~/tools/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar -u $urlscheme://$testdm
+echo "Starting dirsearch.." 
+  interlace -tL ./$domain/$foldername/urllist.txt -threads 10 --silent --no-color -c "python3 ~/tools/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar -t 50 -u _target_ | grep Target && tput sgr0 && echo 'Scan for _target_ completed'" 
 }
 
 crtsh(){
 
-# query crtsh and resolve results with massdns this is more convenient as it might reveal old dns records
-# read reults from sulblist3r+certspotter and resolve using massdns again looking for old dns records
 
- ~/massdns/scripts/ct.py $domain | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S -w  ./$domain/$foldername/crtsh.txt
+
+ ~/massdns/scripts/ct.py $domain 2>/dev/null > ./$domain/$foldername/tmp.txt 
+ [ -s ./$domain/$foldername/tmp.txt ] && cat ./$domain/$foldername/tmp.txt | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S -w  ./$domain/$foldername/crtsh.txt
  cat ./$domain/$foldername/$domain.txt | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S -w  ./$domain/$foldername/domaintemp.txt
 }
 
 mass(){
-# we run massdns with default settings we don't care about wildcard dns and bad resolvers we will clean up once the scan finishes
-# download the latest Seclists collection https://github.com/danielmiessler/SecLists.git
-
- ~/massdns/scripts/subbrute.py ~/tools/SecLists/Discovery/DNS/jhaddix-dns.txt $domain | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$domain/$foldername/mass.txt
+ ~/massdns/scripts/subbrute.py ~/tools/SecLists/Discovery/DNS/clean-jhaddix-dns.txt $domain | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$domain/$foldername/mass.txt
 }
 nsrecords(){
 
-#this function will call crt.sh and massdns then it will look into results and remove any problems related to bad resolvers
-#this function main obective is to find any azure , aws takeovers or any sort of old dns takeovers
+
                 echo "Checking http://crt.sh"
-                crtsh $domain > /dev/null
+                crtsh $domain
                 echo "Starting Massdns Subdomain discovery this may take a while"
                 mass $domain > /dev/null
                 echo "Massdns finished..."
                 echo "${green}Started dns records check...${reset}"
                 echo "Looking into CNAME Records..."
-#we will store all of the results from the previous tools to single temporary file
+
 
                 cat ./$domain/$foldername/mass.txt >> ./$domain/$foldername/temp.txt
                 cat ./$domain/$foldername/domaintemp.txt >> ./$domain/$foldername/temp.txt
                 cat ./$domain/$foldername/crtsh.txt >> ./$domain/$foldername/temp.txt
 
-#read the temporary file and detect wildcard dns remember we only need the first occurence of each domain
-#save results to cleantemp.txt
+
                 cat ./$domain/$foldername/temp.txt | awk '{print $3}' | sort -u | while read line; do
                 wildcard=$(cat ./$domain/$foldername/temp.txt | grep -m 1 $line)
                 echo "$wildcard" >> ./$domain/$foldername/cleantemp.txt
                 done
 
-#read the cleantemp grep for lines with CNAME then save it to a file
+
 
                 cat ./$domain/$foldername/cleantemp.txt | grep CNAME >> ./$domain/$foldername/cnames.txt
                 cat ./$domain/$foldername/cnames.txt | sort -u | while read line; do
-
-#since the file output is as follows test.exmple.com. CNAME something.aws.com.
-#we will take the first part run host and if the result is NXDOMAIN that means we just found an old dns record and possible takeover
-#save results to pos.txt
-
                 hostrec=$(echo "$line" | awk '{print $1}')
                 if [[ $(host $hostrec | grep NXDOMAIN) != "" ]]
                 then
@@ -201,13 +175,9 @@ nsrecords(){
                 sleep 1
                 cat ./$domain/$foldername/$domain.txt > ./$domain/$foldername/alldomains.txt
                 cat ./$domain/$foldername/cleantemp.txt | awk  '{print $1}' | while read line; do
-
-#we take the first part of line test.exmple.com. CNAME something.aws.com. and remove the trailing dot
-
                 x="$line"
                 echo "${x%?}" >> ./$domain/$foldername/alldomains.txt
                 done
-                echo  "${green}Total of $(wc -l ./$domain/$foldername/alldomains.txt | awk '{print $1}') subdomains were found${reset}"
                 sleep 1
 
         }
@@ -215,7 +185,8 @@ nsrecords(){
 report(){
 
   touch ./$domain/$foldername/reports/$subdomain.html
-  echo "<html>" >> ./$domain/$foldername/reports/$subdomain.html
+  echo '<html><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">' >> ./$domain/$foldername/reports/$subdomain.html
   echo "<head>" >> ./$domain/$foldername/reports/$subdomain.html
   echo "<title>Recon Report for $subdomain</title>
 <style>
@@ -269,29 +240,20 @@ echo '</article><article class="post-container-right" itemscope="" itemtype="htt
 <h2>Screenshots</h2>
 <pre style="max-height: 340px;overflow-y: scroll">' >> ./$domain/$foldername/reports/$subdomain.html
 echo '<div class="row">
-  <div class="column">
+<div class="column">
 Port 80' >> ./$domain/$foldername/reports/$subdomain.html
 echo "<a href=\"../screenshots/http-$subdomain-80.png\"><img/src=\"../screenshots/http-$subdomain-80.png\"></a> " >> ./$domain/$foldername/reports/$subdomain.html
-echo ' </div>
+echo '</div>
   <div class="column">
 Port 443' >> ./$domain/$foldername/reports/$subdomain.html
-  echo "<a href=\"../screenshots/https-$subdomain-443.png\"><img/src=\"../screenshots/https-$subdomain-443.png\"></a>" >> ./$domain/$foldername/reports/$subdomain.html
-  echo "</div></div></pre>" >> ./$domain/$foldername/reports/$subdomain.html
-  echo "<h2>Dig Info</h2>
-<pre>
-$(dig $subdomain)
-</pre>" >> ./$domain/$foldername/reports/$subdomain.html
-echo "<h2>Host Info</h2>
-<pre>
-$(host $subdomain)
-</pre>" >> ./$domain/$foldername/reports/$subdomain.html
-echo "<h2>Response Headers</h2>
-<pre>
-$(curl -sSL -D - $subdomain  -o /dev/null)
-</pre>" >> ./$domain/$foldername/reports/$subdomain.html
+echo "<a href=\"../screenshots/https-$subdomain-443.png\"><img/src=\"../screenshots/https-$subdomain-443.png\"></a>" >> ./$domain/$foldername/reports/$subdomain.html
+echo "</div></div></pre>" >> ./$domain/$foldername/reports/$subdomain.html
+#echo "<h2>Dig Info</h2><pre>$(dig $subdomain)</pre>" >> ./$domain/$foldername/reports/$subdomain.html
+echo "<h2>Host Info</h2><pre>$(host $subdomain)</pre>" >> ./$domain/$foldername/reports/$subdomain.html
+echo "<h2>Response Headers</h2><pre></pre>" >> ./$domain/$foldername/reports/$subdomain.html
 echo "<h2>NMAP Results</h2>
 <pre>
-$(nmap -sV -T3 -Pn -p2075,2076,6443,3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443,19000,19080 $subdomain)
+$(nmap -sV -T3 -Pn -p2075,2076,6443,3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443,19000,19080 $subdomain  |  grep -E 'open|filtered|closed')
 </pre>
 </div></article></div>
 </div></div></body></html>" >> ./$domain/$foldername/reports/$subdomain.html
@@ -324,7 +286,7 @@ echo "<a style=\"cursor: pointer\" onclick=\"localStorage.setItem('mode', (local
 </header>" >> ./$domain/$foldername/master_report.html
 
 
- echo '<div id="wrapper"><div id="container">' >> ./$domain/$foldername/master_report.html
+echo '<div id="wrapper"><div id="container">' >> ./$domain/$foldername/master_report.html
 echo "<h1 class=\"post-title\" itemprop=\"name headline\">Recon Report for <a href=\"http://$domain\">$domain</a></h1>" >> ./$domain/$foldername/master_report.html
 echo "<p class=\"blog-description\">Generated by LazyRecon on $(date) </p>" >> ./$domain/$foldername/master_report.html
 echo '<div class="container single-post-container">
@@ -343,7 +305,7 @@ echo '<div class="container single-post-container">
  #make sure you cleanup your dirsearch directory otherwise it will iterate throough all the files including your previous scans
  #all of this should be formatted inside a table
 
-cat ./$domain/$foldername/responsive-$(date +"%Y-%m-%d").txt | while read nline; do
+cat ./$domain/$foldername/urllist.txt |  sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g'  | while read nline; do
 echo "<tr>
  <td><a href='./reports/$nline.html'>$nline</a></td>
  <td>$(wc -l ~/tools/dirsearch/reports/$nline/* | awk '{print $1}')</td>
@@ -353,8 +315,12 @@ echo "</tbody></table>
 <div><h2>Possible NS Takeovers</h2></div>
 <pre>" >> ./$domain/$foldername/master_report.html
 cat ./$domain/$foldername/pos.txt >> ./$domain/$foldername/master_report.html
-echo "</pre></div>" >> ./$domain/$foldername/master_report.html
 
+echo "</pre><div><h2>Wayback data</h2></div>" >> ./$domain/$foldername/master_report.html
+echo "<table><tbody><tr><td><a href='./wayback-data/paramlist.txt'>Params wordlist</a></td></tr>
+<tr><td><a href='./wayback-data/jsurls.txt'>Javscript files</a></td></tr>
+<tr><td><a href='./wayback-data/phpurls.txt'>PHP Urls</a></td></tr>
+<tr><td><a href='./wayback-data/aspxurls.txt'>ASP Urls</a></td></tr></tbody></table></div>" >> ./$domain/$foldername/master_report.html
 
 echo '</article><article class="post-container-right" itemscope="" itemtype="http://schema.org/BlogPosting">
 <header class="post-header">
@@ -374,11 +340,10 @@ $(host $domain)
 </pre>" >> ./$domain/$foldername/master_report.html
 echo "<h2>Response Headers</h2>
 <pre>
-$(curl -sSL -D - $domain  -o /dev/null)
 </pre>" >> ./$domain/$foldername/master_report.html
 echo "<h2>NMAP Results</h2>
 <pre>
-$(nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443,19000,19080 $domain)
+$(nmap -sV -T3 -Pn -p3868,3366,8443,8080,9443,9091,3000,8000,5900,8081,6000,10000,8181,3306,5000,4000,8888,5432,15672,9999,161,4044,7077,4040,9000,8089,443,7447,7080,8880,8983,5673,7443,19000,19080 $domain |  grep -E 'open|filtered|closed')
 </pre>
 </div></article></div>
 </div></div></body></html>" >> ./$domain/$foldername/master_report.html
@@ -399,9 +364,11 @@ ${reset}                                                      "
 cleantemp(){
 
     rm ./$domain/$foldername/temp.txt
+	rm ./$domain/$foldername/tmp.txt
     rm ./$domain/$foldername/domaintemp.txt
     rm ./$domain/$foldername/cleantemp.txt
     rm -rf ~/tools/dirsearch/reports/*.$domain
+	rm -rf ~/tools/dirsearch/reports/$domain
 }
 main(){
   clear
@@ -415,28 +382,27 @@ main(){
 
   mkdir ./$domain/$foldername
   mkdir ./$domain/$foldername/reports/
+  mkdir ./$domain/$foldername/wayback-data/
   mkdir ./$domain/$foldername/screenshots/
-  mkdir ./$domain/$foldername/content/
   touch ./$domain/$foldername/crtsh.txt
   touch ./$domain/$foldername/mass.txt
   touch ./$domain/$foldername/cnames.txt
   touch ./$domain/$foldername/pos.txt
   touch ./$domain/$foldername/alldomains.txt
   touch ./$domain/$foldername/temp.txt
+  touch ./$domain/$foldername/tmp.txt
   touch ./$domain/$foldername/domaintemp.txt
   touch ./$domain/$foldername/ipaddress.txt
   touch ./$domain/$foldername/cleantemp.txt
-  touch ./$domain/$foldername/unreachable.html
-  touch ./$domain/$foldername/responsive-$(date +"%Y-%m-%d").txt
-  touch ./$domain/$foldername/responsive-$(date +"%Y-%m-%d")-codes.txt
   touch ./$domain/$foldername/master_report.html
-  rm -rf ~/tools/dirsearch/reports/*.$domain
+  cleantemp 
   recon $domain
   master_report $domain
   echo "${green}Scan for $domain finished successfully${reset}"
-  cleantemp $domain
+  cleantemp 
 }
-
+todate=$(date +"%Y-%m-%d")
 path=$(pwd)
-foldername=recon-$(date +"%Y-%m-%d")
+foldername=recon-$todate
 main $domain
+
