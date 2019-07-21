@@ -13,9 +13,12 @@
 ![Example Output](https://github.com/plenumlab/lazyrecon/blob/master/lazyrecon2.jpg)
 
 # Lazyrecon updated
-Subdomain discovery using Sublist3r, certspotter, crt.sh and massdns
-Directory bruteforce with dirsearch
-45 thousands dns query and more than 80 thousands http requests in less than 10 minutes
+
+[+] Subdomain discovery using Sublist3r, certspotter, crt.sh and massdns
+
+[+] Directory bruteforce with dirsearch
+
+[+] 45 thousands dns query and more than 80 thousands http requests in less than 10 minutes
 
 # About
 
