@@ -45,17 +45,20 @@ This tool allows you to gather some information that should help you identify wh
 - Directory search module is now MULTITHREADED (up to 10 subdomains scanned at a time)
 - Enhanced html reports with the ability to search for strings, endpoints, reponse sizes or status codes
 
-# Requirements
+# DEMO
+![cli output](https://github.com/plenumlab/lazyrecon/raw/dev/upgrade/recon.gif)
+=================================================================================
+![report demo](https://github.com/plenumlab/lazyrecon/raw/dev/upgrade/report.gif)
+
+
+# Installation & Requirements
 - Download the install script from https://github.com/nahamsec/bbht.
 - Go version 1.10 or later.
 
 ### System Requirements
 - Recommended to run on vps with 1VCPU and 2GB ram.
 
-# DEMO
-![cli output](https://github.com/plenumlab/lazyrecon/raw/dev/upgrade/recon.gif)
-=================================================================================
-![report demo](https://github.com/plenumlab/lazyrecon/raw/dev/upgrade/report.gif)
+
 
 # Authors and Thanks
 This script makes use of tools developped by the following people
