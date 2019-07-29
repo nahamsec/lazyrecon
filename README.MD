@@ -67,6 +67,9 @@ This tool allows you to gather some information that should help you identify wh
 - SubDomain exclusion
 
 
+
+
+
 **Warning:** This code was originally created for personal use for myself, it generates a substantial amount of traffic, please use with caution. 
 
 
