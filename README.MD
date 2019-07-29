@@ -53,13 +53,14 @@ This tool allows you to gather some information that should help you identify wh
 - Recommended to run on vps with 1VCPU and 2GB ram.
 
 
-# CREDITS
-- [Tomonomnom](https://github.com/tomnomnom)
-- [Aboul3la](https://github.com/aboul3la)
-- [Blechschmidt](https://github.com/blechschmidt)
-- [Maaaaz](https://github.com/maaaaz)
-- [Danielmiessler](https://github.com/danielmiessler)
-- [Codingo](https://github.com/codingo)
+# Authors and Thanks
+This script makes use of tools developped by the following people
+- [Tom Hudson - Tomonomnom](https://github.com/tomnomnom)
+- [Ahmed Aboul-Ela - Aboul3la](https://github.com/aboul3la)
+- [B. Blechschmidt - Blechschmidt](https://github.com/blechschmidt)
+- [Thomas D. - Maaaaz](https://github.com/maaaaz)
+- [Daniel Miessler - Danielmiessler](https://github.com/danielmiessler)
+- [Michael Skelton - Codingo](https://github.com/codingo)
 
 # TO DO
 - Add aquatone for screenshots
