@@ -5,12 +5,13 @@ green=`tput setaf 2`
 yellow=`tput setaf 3`
 reset=`tput sgr0`
 
+SECONDS=0
 
 domain=
-
+subreport=
 usage() { echo -e "Usage: $0 -d domain [-e]\n  Select -e to specify excluded domains\n " 1>&2; exit 1; }
 
-while getopts "sd:" o; do
+while getopts ":d:e:r:" o; do
     case "${o}" in
         d)
             domain=${OPTARG}
@@ -20,16 +21,19 @@ while getopts "sd:" o; do
         e)
             excluded=${OPTARG}
             ;;
-
+		
+		r)
+            subreport+=("$OPTARG")
+            ;;
         *)
             usage
             ;;
     esac
 done
-shift $((OPTIND-1))
+shift $((OPTIND - 1))
 
-if [ -z "${domain}" ] ; then
-   usage
+if [ -z "${domain}" ] && [[ -z ${subreport[@]} ]]; then
+   usage; exit 1;
 fi
 
 discovery(){
@@ -38,13 +42,12 @@ discovery(){
 	cleanup $domain
 	waybackrecon $domain
 	dirsearcher 
-	echo "${reset}Starting report generation..."
-	cat ./$domain/$foldername/urllist.txt | sort -u | while read line; do
-		subdomain=$(echo $line | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g')
-		echo -ne "${yellow}[+] $subdomain :"
-		report $domain $subdomain
-		echo " ${green}DONE${reset}"
-	done
+#	cat ./$domain/$foldername/urllist.txt | sort -u | while read line; do
+#		subdomain=$(echo $line | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g')
+#		echo -ne "${yellow}[+] $subdomain :"
+#		report $domain $subdomain
+#		echo " ${green}DONE${reset}"
+#	done
 
 }
 waybackrecon () {
@@ -79,8 +82,8 @@ cat ./$domain/$foldername/responsive.txt | sed 's/\http\:\/\///g' |  sed 's/\htt
 probeurl=$(cat ./$domain/$foldername/responsive.txt | sort -u | grep -m 1 $line)
 echo "$probeurl" >> ./$domain/$foldername/urllist.txt
 done
+echo "$(cat ./$domain/$foldername/urllist.txt | sort -u)" > ./$domain/$foldername/urllist.txt
 echo  "${yellow}Total of $(wc -l ./$domain/$foldername/urllist.txt | awk '{print $1}') live subdomains were found${reset}"
-
 }
 
 screenshot(){
@@ -94,7 +97,7 @@ recon(){
   echo "Listing subdomains using sublister..."
   python ~/tools/Sublist3r/sublist3r.py -d $domain -t 10 -v -o ./$domain/$foldername/$domain.txt > /dev/null
   echo "Checking certspotter..."
-  curl -s https://certspotter.com/api/v0/certs\?domain\=$domain | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u |grep $domain >> ./$domain/$foldername/$domain.txt
+  curl -s https://certspotter.com/api/v0/certs\?domain\=$domain | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $domain >> ./$domain/$foldername/$domain.txt
   nsrecords $domain
   #echo "Looking up ipaddress space..."
   #asnlookup $domain
@@ -122,7 +125,7 @@ asnlookup(){
 dirsearcher(){
 
 echo "Starting dirsearch.." 
-  interlace -tL ./$domain/$foldername/urllist.txt -threads 10 --silent --no-color -c "python3 ~/tools/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar -t 50 -u _target_ | grep Target && tput sgr0 && echo 'Scan for _target_ completed'" 
+  domain=$domain foldername=$foldername  interlace -tL ./$domain/$foldername/urllist.txt -threads 10 --silent --no-color -c "python3 ~/tools/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar -t 50 -u _target_ | grep Target && tput sgr0 && ./recon.sh -r $domain -r $foldername -r _target_" 
 }
 
 crtsh(){
@@ -135,7 +138,7 @@ crtsh(){
 }
 
 mass(){
- ~/massdns/scripts/subbrute.py ~/tools/SecLists/Discovery/DNS/clean-jhaddix-dns.txt $domain | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$domain/$foldername/mass.txt
+ ~/massdns/scripts/subbrute.py ~/tools/bust/all.txt $domain | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$domain/$foldername/mass.txt
 }
 nsrecords(){
 
@@ -183,22 +186,36 @@ nsrecords(){
         }
 
 report(){
-
+  subdomain=$(echo $subd | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g')
+  echo "${yellow}	[+] Generating report for $subdomain"
+  
   touch ./$domain/$foldername/reports/$subdomain.html
   echo '<html><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">' >> ./$domain/$foldername/reports/$subdomain.html
   echo "<head>" >> ./$domain/$foldername/reports/$subdomain.html
   echo "<title>Recon Report for $subdomain</title>
-<style>
-.status.redirect{color:#d0b200}.status.fivehundred{color:#DD4A68}.status.jackpot{color:#0dee00}.status.weird{color:#cc00fc}img{padding:5px;width:360px}img:hover{box-shadow:0 0 2px 1px rgba(0,140,186,.5)}pre{font-family:Inconsolata,monospace}pre{margin:0 0 20px}pre{overflow-x:auto}article,header,img{display:block}#wrapper:after,.blog-description:after,.clearfix:after{content:}.container{position:relative}html{line-height:1.15;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}h1{margin:.67em 0}h1,h2{margin-bottom:20px}a{background-color:transparent;-webkit-text-decoration-skip:objects;text-decoration:none}.container,table{width:100%}.site-header{overflow:auto}.post-header,.post-title,.site-header,.site-title,h1,h2{text-transform:uppercase}p{line-height:1.5em}pre,table td{padding:10px}h2{padding-top:40px;font-weight:900}a{color:#00a0fc}body,html{height:100%}body{margin:0;background:#fefefe;color:#424242;font-family:Raleway,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,"Helvetica Neue",Arial,sans-serif;font-size:24px}h1{font-size:35px}h2{font-size:28px}p{margin:0 0 30px}pre{background:#f1f0ea;border:1px solid #dddbcc;border-radius:3px;font-size:16px}.row{display:flex}.column{flex:100%}table tbody>tr:nth-child(odd)>td,table tbody>tr:nth-child(odd)>th{background-color:#f7f7f3}table th{padding:0 10px 10px;text-align:left}.post-header,.post-title,.site-header{text-align:center}table tr{border-bottom:1px dotted #aeadad}::selection{background:#fff5b8;color:#000;display:block}::-moz-selection{background:#fff5b8;color:#000;display:block}.clearfix:after{display:table;clear:both}.container{max-width:100%}#wrapper{height:auto;min-height:100%;margin-bottom:-265px}#wrapper:after{display:block;height:265px}.site-header{padding:40px 0 0}.site-title{float:left;font-size:14px;font-weight:600;margin:0}.site-title a{float:left;background:#00a0fc;color:#fefefe;padding:5px 10px 6px}.post-container-left{width:49%;float:left;margin:auto}.post-container-right{width:49%;float:right;margin:auto}.post-header{border-bottom:1px solid #333;margin:0 0 50px;padding:0}.post-title{font-size:55px;font-weight:900;margin:15px 0}.blog-description{color:#aeadad;font-size:14px;font-weight:600;line-height:1;margin:25px 0 0;text-align:center}.single-post-container{margin-top:50px;padding-left:15px;padding-right:15px;box-sizing:border-box}body.dark{background-color:#1e2227;color:#fff}body.dark pre{background:#282c34}body.dark table tbody>tr:nth-child(odd)>td,body.dark table tbody>tr:nth-child(odd)>th{background:#282c34}body.dark .status.redirect{color:#ecdb54}</style>
+<style>.status.fourhundred{color:#00a0fc}
+.status.redirect{color:#d0b200}.status.fivehundred{color:#DD4A68}.status.jackpot{color:#0dee00}.status.weird{color:#cc00fc}img{padding:5px;width:360px}img:hover{box-shadow:0 0 2px 1px rgba(0,140,186,.5)}pre{font-family:Inconsolata,monospace}pre{margin:0 0 20px}pre{overflow-x:auto}article,header,img{display:block}#wrapper:after,.blog-description:after,.clearfix:after{content:}.container{position:relative}html{line-height:1.15;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}h1{margin:.67em 0}h1,h2{margin-bottom:20px}a{background-color:transparent;-webkit-text-decoration-skip:objects;text-decoration:none}.container,table{width:100%}.site-header{overflow:auto}.post-header,.post-title,.site-header,.site-title,h1,h2{text-transform:uppercase}p{line-height:1.5em}pre,table td{padding:10px}h2{padding-top:40px;font-weight:900}a{color:#00a0fc}body,html{height:100%}body{margin:0;background:#fefefe;color:#424242;font-family:Raleway,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,'Helvetica Neue',Arial,sans-serif;font-size:24px}h1{font-size:35px}h2{font-size:28px}p{margin:0 0 30px}pre{background:#f1f0ea;border:1px solid #dddbcc;border-radius:3px;font-size:16px}.row{display:flex}.column{flex:100%}table tbody>tr:nth-child(odd)>td,table tbody>tr:nth-child(odd)>th{background-color:#f7f7f3}table th{padding:0 10px 10px;text-align:left}.post-header,.post-title,.site-header{text-align:center}table tr{border-bottom:1px dotted #aeadad}::selection{background:#fff5b8;color:#000;display:block}::-moz-selection{background:#fff5b8;color:#000;display:block}.clearfix:after{display:table;clear:both}.container{max-width:100%}#wrapper{height:auto;min-height:100%;margin-bottom:-265px}#wrapper:after{display:block;height:265px}.site-header{padding:40px 0 0}.site-title{float:left;font-size:14px;font-weight:600;margin:0}.site-title a{float:left;background:#00a0fc;color:#fefefe;padding:5px 10px 6px}.post-container-left{width:49%;float:left;margin:auto}.post-container-right{width:49%;float:right;margin:auto}.post-header{border-bottom:1px solid #333;margin:0 0 50px;padding:0}.post-title{font-size:55px;font-weight:900;margin:15px 0}.blog-description{color:#aeadad;font-size:14px;font-weight:600;line-height:1;margin:25px 0 0;text-align:center}.single-post-container{margin-top:50px;padding-left:15px;padding-right:15px;box-sizing:border-box}body.dark{background-color:#1e2227;color:#fff}body.dark pre{background:#282c34}body.dark table tbody>tr:nth-child(odd)>td,body.dark table tbody>tr:nth-child(odd)>th{background:#282c34} table tbody>tr:nth-child(even)>th{background:#1e2227} input{font-family:Inconsolata,monospace} body.dark .status.redirect{color:#ecdb54} body.dark input{border:1px solid ;border-radius: 3px; background:#282c34;color: white} body.dark label{color:#f1f0ea} body.dark pre{color:#fff}</style>
 <script>
 document.addEventListener('DOMContentLoaded', (event) => {
   ((localStorage.getItem('mode') || 'dark') === 'dark') ? document.querySelector('body').classList.add('dark') : document.querySelector('body').classList.remove('dark')
 })
-</script></head>" >> ./$domain/$foldername/reports/$subdomain.html
+</script>" >> ./$domain/$foldername/reports/$subdomain.html
+echo '<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.1.0/material.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.material.min.css">
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script><script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/dataTables.material.min.js"></script>'>> ./$domain/$foldername/reports/$subdomain.html 
+echo '<script>$(document).ready( function () {
+    $("#myTable").DataTable({
+        "paging":   true,
+        "ordering": true,
+        "info":     true
+    });
+} );</script></head>'>> ./$domain/$foldername/reports/$subdomain.html 
+
 echo '<body class="dark"><header class="site-header">
 <div class="site-title"><p>' >> ./$domain/$foldername/reports/$subdomain.html
-echo "<a style=\"cursor: pointer\" onclick=\"localStorage.setItem('mode', (localStorage.getItem('mode') || 'dark') === 'dark' ? 'bright' : 'dark'); localStorage.getItem('mode') === 'dark' ? document.querySelector('body').classList.add('dark') : document.querySelector('body').classList.remove('dark')\" title=\"Switch to light or dark theme\">🌓 Light|dark mode</a>
+echo "<a style=\"cursor: pointer\" onclick=\"localStorage.setItem('mode', (localStorage.getItem('mode') || 'dark') === 'dark' ? 'bright' : 'dark'); localStorage.getItem('mode') === 'dark' ? document.querySelector('body').classList.add('dark') : document.querySelector('body').classList.remove('dark')\" title=\"Switch to light or dark theme\">ðŸŒ“ Light|dark mode</a>
 </p>
 </div>
 </header>" >> ./$domain/$foldername/reports/$subdomain.html
@@ -214,24 +231,33 @@ echo '<div class="container single-post-container">
 
 #read content discover results get the request response code then save to html with color coding
 
-  echo "<pre>" >> ./$domain/$foldername/reports/$subdomain.html
+  echo "<table id='myTable' class='stripe'>" >> ./$domain/$foldername/reports/$subdomain.html
+  echo "<thead><tr>
+ <th>Status Code</th>
+ <th>Content-Length</th>
+ <th>Url</th>
+ </tr></thead><tbody>" >> ./$domain/$foldername/reports/$subdomain.html
   cat ~/tools/dirsearch/reports/$subdomain/* | while read nline; do
   status_code=$(echo "$nline" | awk '{print $1}')
+  size=$(echo "$nline" | awk '{print $2}')
   url=$(echo "$nline" | awk '{print $3}')
+  
+ echo "<tr>" >> ./$domain/$foldername/reports/$subdomain.html
  if [[ "$status_code" == *20[012345678]* ]]; then
-    echo "<a class='status jackpot' href='$url'>$nline</a>" >> ./$domain/$foldername/reports/$subdomain.html
+    echo "<td class='status jackpot'>$status_code</td><td class='status jackpot'>$size</td><td><a class='status jackpot' href='$url'>$url</a></td>" >> ./$domain/$foldername/reports/$subdomain.html
   elif [[ "$status_code" == *30[012345678]* ]]; then
-    echo "<a class='status redirect' href='$url'>$nline</a>" >> ./$domain/$foldername/reports/$subdomain.html
+    echo "<td class='status redirect'>$status_code</td><td class='status redirect'>$size</td><td><a class='status redirect' href='$url'>$url</a></td>" >> ./$domain/$foldername/reports/$subdomain.html
   elif [[ "$status_code" == *40[012345678]* ]]; then
-    echo "<a href='$url'>$nline</a>" >> ./$domain/$foldername/reports/$subdomain.html
+    echo "<td class='status fourhundred'>$status_code</td><td class='status fourhundred'>$size</td><td><a class='status fourhundred' href='$url'>$url</a></td>" >> ./$domain/$foldername/reports/$subdomain.html
   elif [[ "$status_code" == *50[012345678]* ]]; then
-    echo "<a class='status fivehundred' href='$url'>$nline</a>" >> ./$domain/$foldername/reports/$subdomain.html
+    echo "<td class='status fivehundred'>$status_code</td><td class='status fivehundred'>$size</td><td><a class='status fivehundred' href='$url'>$url</a></td>" >> ./$domain/$foldername/reports/$subdomain.html
   else
-     echo "<a class='status weird' href='$url'>$nline</a>" >> ./$domain/$foldername/reports/$subdomain.html
+     echo "<td class='status weird'>$status_code</td><td class='status weird'>$size</td><td><a class='status weird' href='$url'>$url</a></td>" >> ./$domain/$foldername/reports/$subdomain.html
   fi
+ echo "</tr>">> ./$domain/$foldername/reports/$subdomain.html
 done
 
-  echo "</pre></div>" >> ./$domain/$foldername/reports/$subdomain.html
+  echo "</tbody></table></div>" >> ./$domain/$foldername/reports/$subdomain.html
 
 echo '</article><article class="post-container-right" itemscope="" itemtype="http://schema.org/BlogPosting">
 <header class="post-header">
@@ -268,19 +294,29 @@ master_report()
 <head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">' >> ./$domain/$foldername/master_report.html
 echo "<title>Recon Report for $domain</title>
-<style>.status.redirect{color:#d0b200}.status.fivehundred{color:#DD4A68}.status.jackpot{color:#0dee00}img{padding:5px;width:360px}img:hover{box-shadow:0 0 2px 1px rgba(0,140,186,.5)}pre{font-family:Inconsolata,monospace}pre{margin:0 0 20px}pre{overflow-x:auto}article,header,img{display:block}#wrapper:after,.blog-description:after,.clearfix:after{content:}.container{position:relative}html{line-height:1.15;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}h1{margin:.67em 0}h1,h2{margin-bottom:20px}a{background-color:transparent;-webkit-text-decoration-skip:objects;text-decoration:none}.container,table{width:100%}.site-header{overflow:auto}.post-header,.post-title,.site-header,.site-title,h1,h2{text-transform:uppercase}p{line-height:1.5em}pre,table td{padding:10px}h2{padding-top:40px;font-weight:900}a{color:#00a0fc}body,html{height:100%}body{margin:0;background:#fefefe;color:#424242;font-family:Raleway,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,"Helvetica Neue",Arial,sans-serif;font-size:24px}h1{font-size:35px}h2{font-size:28px}p{margin:0 0 30px}pre{background:#f1f0ea;border:1px solid #dddbcc;border-radius:3px;font-size:16px}.row{display:flex}.column{flex:100%}table tbody>tr:nth-child(odd)>td,table tbody>tr:nth-child(odd)>th{background-color:#f7f7f3}table th{padding:0 10px 10px;text-align:left}.post-header,.post-title,.site-header{text-align:center}table tr{border-bottom:1px dotted #aeadad}::selection{background:#fff5b8;color:#000;display:block}::-moz-selection{background:#fff5b8;color:#000;display:block}.clearfix:after{display:table;clear:both}.container{max-width:100%}#wrapper{height:auto;min-height:100%;margin-bottom:-265px}#wrapper:after{display:block;height:265px}.site-header{padding:40px 0 0}.site-title{float:left;font-size:14px;font-weight:600;margin:0}.site-title a{float:left;background:#00a0fc;color:#fefefe;padding:5px 10px 6px}.post-container-left{width:49%;float:left;margin:auto}.post-container-right{width:49%;float:right;margin:auto}.post-header{border-bottom:1px solid #333;margin:0 0 50px;padding:0}.post-title{font-size:55px;font-weight:900;margin:15px 0}.blog-description{color:#aeadad;font-size:14px;font-weight:600;line-height:1;margin:25px 0 0;text-align:center}.single-post-container{margin-top:50px;padding-left:15px;padding-right:15px;box-sizing:border-box}body.dark{background-color:#1e2227;color:#fff}body.dark pre{background:#282c34}body.dark table tbody>tr:nth-child(odd)>td,body.dark table tbody>tr:nth-child(odd)>th{background:#282c34}body.dark .status.redirect{color:#ecdb54}</style>
+<style>.status.redirect{color:#d0b200}.status.fivehundred{color:#DD4A68}.status.jackpot{color:#0dee00}img{padding:5px;width:360px}img:hover{box-shadow:0 0 2px 1px rgba(0,140,186,.5)}pre{font-family:Inconsolata,monospace}pre{margin:0 0 20px}pre{overflow-x:auto}article,header,img{display:block}#wrapper:after,.blog-description:after,.clearfix:after{content:}.container{position:relative}html{line-height:1.15;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}h1{margin:.67em 0}h1,h2{margin-bottom:20px}a{background-color:transparent;-webkit-text-decoration-skip:objects;text-decoration:none}.container,table{width:100%}.site-header{overflow:auto}.post-header,.post-title,.site-header,.site-title,h1,h2{text-transform:uppercase}p{line-height:1.5em}pre,table td{padding:10px}h2{padding-top:40px;font-weight:900}a{color:#00a0fc}body,html{height:100%}body{margin:0;background:#fefefe;color:#424242;font-family:Raleway,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,'Helvetica Neue',Arial,sans-serif;font-size:24px}h1{font-size:35px}h2{font-size:28px}p{margin:0 0 30px}pre{background:#f1f0ea;border:1px solid #dddbcc;border-radius:3px;font-size:16px}.row{display:flex}.column{flex:100%}table tbody>tr:nth-child(odd)>td,table tbody>tr:nth-child(odd)>th{background-color:#f7f7f3}table th{padding:0 10px 10px;text-align:left}.post-header,.post-title,.site-header{text-align:center}table tr{border-bottom:1px dotted #aeadad}::selection{background:#fff5b8;color:#000;display:block}::-moz-selection{background:#fff5b8;color:#000;display:block}.clearfix:after{display:table;clear:both}.container{max-width:100%}#wrapper{height:auto;min-height:100%;margin-bottom:-265px}#wrapper:after{display:block;height:265px}.site-header{padding:40px 0 0}.site-title{float:left;font-size:14px;font-weight:600;margin:0}.site-title a{float:left;background:#00a0fc;color:#fefefe;padding:5px 10px 6px}.post-container-left{width:49%;float:left;margin:auto}.post-container-right{width:49%;float:right;margin:auto}.post-header{border-bottom:1px solid #333;margin:0 0 50px;padding:0}.post-title{font-size:55px;font-weight:900;margin:15px 0}.blog-description{color:#aeadad;font-size:14px;font-weight:600;line-height:1;margin:25px 0 0;text-align:center}.single-post-container{margin-top:50px;padding-left:15px;padding-right:15px;box-sizing:border-box}body.dark{background-color:#1e2227;color:#fff}body.dark pre{background:#282c34}body.dark table tbody>tr:nth-child(odd)>td,body.dark table tbody>tr:nth-child(odd)>th{background:#282c34}input{font-family:Inconsolata,monospace} body.dark .status.redirect{color:#ecdb54} body.dark input{border:1px solid ;border-radius: 3px; background:#282c34;color: white} body.dark label{color:#f1f0ea} body.dark pre{color:#fff}</style>
 <script>
 document.addEventListener('DOMContentLoaded', (event) => {
   ((localStorage.getItem('mode') || 'dark') === 'dark') ? document.querySelector('body').classList.add('dark') : document.querySelector('body').classList.remove('dark')
 })
-</script></head>" >> ./$domain/$foldername/master_report.html
-
+</script>" >> ./$domain/$foldername/master_report.html
+echo '<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.1.0/material.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.material.min.css">
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script><script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/dataTables.material.min.js"></script>'>> ./$domain/$foldername/master_report.html
+echo '<script>$(document).ready( function () {
+    $("#myTable").DataTable({
+        "paging":   true,
+        "ordering": true,
+        "info":     false
+    });
+} );</script></head>'>> ./$domain/$foldername/master_report.html
 
 
 
 echo '<body class="dark"><header class="site-header">
 <div class="site-title"><p>' >> ./$domain/$foldername/master_report.html
-echo "<a style=\"cursor: pointer\" onclick=\"localStorage.setItem('mode', (localStorage.getItem('mode') || 'dark') === 'dark' ? 'bright' : 'dark'); localStorage.getItem('mode') === 'dark' ? document.querySelector('body').classList.add('dark') : document.querySelector('body').classList.remove('dark')\" title=\"Switch to light or dark theme\">🌓 Light|dark mode</a>
+echo "<a style=\"cursor: pointer\" onclick=\"localStorage.setItem('mode', (localStorage.getItem('mode') || 'dark') === 'dark' ? 'bright' : 'dark'); localStorage.getItem('mode') === 'dark' ? document.querySelector('body').classList.add('dark') : document.querySelector('body').classList.remove('dark')\" title=\"Switch to light or dark theme\">ðŸŒ“ Light|dark mode</a>
 </p>
 </div>
 </header>" >> ./$domain/$foldername/master_report.html
@@ -295,11 +331,14 @@ echo '<div class="container single-post-container">
 </header>
 <div class="post-content clearfix" itemprop="articleBody">
 <h2>Total scanned subdomains</h2>
-<table>
-<tbody><tr>
+<table id="myTable" class="stripe">
+<thead>
+<tr>
  <th>Subdomains</th>
  <th>Scanned Urls</th>
- </tr>' >> ./$domain/$foldername/master_report.html
+ </tr>
+ </thead>
+<tbody>' >> ./$domain/$foldername/master_report.html
 
  #we just created the first part of the page now we just iterate through our scanned subdomains then we count number of found content from dirsearch directory
  #make sure you cleanup your dirsearch directory otherwise it will iterate throough all the files including your previous scans
@@ -317,10 +356,12 @@ echo "</tbody></table>
 cat ./$domain/$foldername/pos.txt >> ./$domain/$foldername/master_report.html
 
 echo "</pre><div><h2>Wayback data</h2></div>" >> ./$domain/$foldername/master_report.html
-echo "<table><tbody><tr><td><a href='./wayback-data/paramlist.txt'>Params wordlist</a></td></tr>
-<tr><td><a href='./wayback-data/jsurls.txt'>Javscript files</a></td></tr>
-<tr><td><a href='./wayback-data/phpurls.txt'>PHP Urls</a></td></tr>
-<tr><td><a href='./wayback-data/aspxurls.txt'>ASP Urls</a></td></tr></tbody></table></div>" >> ./$domain/$foldername/master_report.html
+echo "<table><tbody>" >> ./$domain/$foldername/master_report.html
+[ -s ./$domain/$foldername/wayback-data/paramlist.txt ] && echo "<tr><td><a href='./wayback-data/paramlist.txt'>Params wordlist</a></td></tr>" >> ./$domain/$foldername/master_report.html
+[ -s ./$domain/$foldername/wayback-data/jsurls.txt ] && echo "<tr><td><a href='./wayback-data/jsurls.txt'>Javscript files</a></td></tr>" >> ./$domain/$foldername/master_report.html
+[ -s ./$domain/$foldername/wayback-data/phpurls.txt ] && echo "<tr><td><a href='./wayback-data/phpurls.txt'>PHP Urls</a></td></tr>" >> ./$domain/$foldername/master_report.html
+[ -s ./$domain/$foldername/wayback-data/aspxurls.txt ] && echo "<tr><td><a href='./wayback-data/aspxurls.txt'>ASP Urls</a></td></tr>" >> ./$domain/$foldername/master_report.html
+echo "</tbody></table></div>" >> ./$domain/$foldername/master_report.html
 
 echo '</article><article class="post-container-right" itemscope="" itemtype="http://schema.org/BlogPosting">
 <header class="post-header">
@@ -371,6 +412,12 @@ cleantemp(){
 	rm -rf ~/tools/dirsearch/reports/$domain
 }
 main(){
+if [ -z "${domain}" ]; then
+domain=${subreport[1]}
+foldername=${subreport[2]}
+subd=${subreport[3]}
+report $domain $subdomain $foldername; exit 1;
+fi
   clear
   logo
   if [ -d "./$domain" ]
@@ -399,6 +446,8 @@ main(){
   recon $domain
   master_report $domain
   echo "${green}Scan for $domain finished successfully${reset}"
+  duration=$SECONDS
+  echo "Scan completed in : $(($duration / 60)) minutes and $(($duration % 60)) seconds."
   cleantemp 
 }
 todate=$(date +"%Y-%m-%d")
