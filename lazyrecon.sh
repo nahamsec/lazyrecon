@@ -42,12 +42,6 @@ discovery(){
 	cleanup $domain
 	waybackrecon $domain
 	dirsearcher 
-#	cat ./$domain/$foldername/urllist.txt | sort -u | while read line; do
-#		subdomain=$(echo $line | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g')
-#		echo -ne "${yellow}[+] $subdomain :"
-#		report $domain $subdomain
-#		echo " ${green}DONE${reset}"
-#	done
 
 }
 waybackrecon () {
@@ -108,6 +102,7 @@ recon(){
 
 }
 asnlookup(){
+# Disabled for the moment will be back soon
  dm="$domain"
  org=$(echo "${dm%%.*}")
  python ~/tools/asnlookup/asnlookup.py -o $org |  grep -E "*/[0-9]" > ./$domain/$foldername/ipaddress.txt
@@ -118,8 +113,6 @@ asnlookup(){
     else
     echo "Could not find ip address space :/";
     fi
-
-
 }
 
 dirsearcher(){
@@ -130,15 +123,13 @@ echo "Starting dirsearch.."
 
 crtsh(){
 
-
-
  ~/massdns/scripts/ct.py $domain 2>/dev/null > ./$domain/$foldername/tmp.txt 
  [ -s ./$domain/$foldername/tmp.txt ] && cat ./$domain/$foldername/tmp.txt | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S -w  ./$domain/$foldername/crtsh.txt
  cat ./$domain/$foldername/$domain.txt | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S -w  ./$domain/$foldername/domaintemp.txt
 }
 
 mass(){
- ~/massdns/scripts/subbrute.py ~/tools/bust/all.txt $domain | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$domain/$foldername/mass.txt
+ ~/massdns/scripts/subbrute.py ~/tools/SecLists/Discovery/DNS/clean-jhaddix-dns.txt $domain | ~/massdns/bin/massdns -r ~/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$domain/$foldername/mass.txt
 }
 nsrecords(){
 
@@ -405,11 +396,11 @@ ${reset}                                                      "
 cleantemp(){
 
     rm ./$domain/$foldername/temp.txt
-	rm ./$domain/$foldername/tmp.txt
+    rm ./$domain/$foldername/tmp.txt
     rm ./$domain/$foldername/domaintemp.txt
     rm ./$domain/$foldername/cleantemp.txt
     rm -rf ~/tools/dirsearch/reports/*.$domain
-	rm -rf ~/tools/dirsearch/reports/$domain
+    rm -rf ~/tools/dirsearch/reports/$domain
 }
 main(){
 if [ -z "${domain}" ]; then
