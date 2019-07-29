@@ -52,6 +52,10 @@ This tool allows you to gather some information that should help you identify wh
 ### System Requirements
 - Recommended to run on vps with 1VCPU and 2GB ram.
 
+# DEMO
+![cli output](https://github.com/plenumlab/lazyrecon/raw/dev/upgrade/recon.gif)
+=================================================================================
+![report demo](https://github.com/plenumlab/lazyrecon/raw/dev/upgrade/report.gif)
 
 # Authors and Thanks
 This script makes use of tools developped by the following people
