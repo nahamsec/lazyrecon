@@ -127,7 +127,7 @@ recon(){
 dirsearcher(){
 
 echo "Starting dirsearch..." 
-  domain=$domain foldername=$foldername dirsearchWordlist=$dirsearchWordlist interlace -tL ./$domain/$foldername/urllist.txt -threads $interlaceThreads --silent --no-color -c "python3 ~/tools/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar -w $dirsearchWordlist -t 50 -u _target_ | grep Target && tput sgr0 && ./recon.sh -r $domain -r $foldername -r _target_" 
+  domain=$domain foldername=$foldername dirsearchWordlist=$dirsearchWordlist interlace -tL ./$domain/$foldername/urllist.txt -threads $interlaceThreads --silent --no-color -c "python3 ~/tools/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar -w $dirsearchWordlist -t 50 -u _target_ | grep Target && tput sgr0 && ./lazyrecon.sh -r $domain -r $foldername -r _target_" 
 }
 
 aqua(){
