@@ -344,7 +344,7 @@ echo '<script>$(document).ready( function () {
     $("#myTable").DataTable({
         "paging":   true,
         "ordering": true,
-        "info":     false
+        "info":     false,
 	"lengthMenu": [[10, 25, 50,100, -1], [10, 25, 50,100, "All"]],
     });
 } );</script></head>'>> ./$domain/$foldername/master_report.html
