@@ -8,7 +8,7 @@
 # 
 ########################################
 auquatoneThreads=5
-interlaceThreads=10
+subdomainThreads=10
 dirsearchThreads=50
 dirsearchWordlist=~/tools/dirsearch/db/dicc.txt
 massdnsWordlist=~/tools/SecLists/Discovery/DNS/clean-jhaddix-dns.txt
@@ -127,7 +127,7 @@ recon(){
 dirsearcher(){
 
 echo "Starting dirsearch..." 
-  domain=$domain foldername=$foldername dirsearchWordlist=$dirsearchWordlist interlace -tL ./$domain/$foldername/urllist.txt -threads $interlaceThreads --silent --no-bar --no-color -c "python3 ~/tools/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar -w $dirsearchWordlist -t 50 -u _target_ | grep Target && tput sgr0 && ./lazyrecon.sh -r $domain -r $foldername -r _target_" 
+cat ./$domain/$foldername/urllist.txt | xargs -P$subdomainThreads -I % sh -c "python3 ~/tools/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar -w $dirsearchWordlist -t $dirsearchThreads -u % | grep Target && tput sgr0 && ./lazyrecon.sh -r $domain -r $foldername -r %"
 }
 
 aqua(){
