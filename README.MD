@@ -67,10 +67,9 @@ This script makes use of tools developped by the following people
 - [B. Blechschmidt - Blechschmidt](https://github.com/blechschmidt)
 - [Thomas D. - Maaaaz](https://github.com/maaaaz)
 - [Daniel Miessler - Danielmiessler](https://github.com/danielmiessler)
-- [Michael Skelton - Codingo](https://github.com/codingo)
+
 
 # TO DO
-- Add aquatone for screenshots
 - Report only mode to generate reports for old dirsearch data
 - SubDomain exclusion
 
@@ -78,6 +77,6 @@ This script makes use of tools developped by the following people
 
 
 
-**Warning:** This code was originally created for personal use for myself, it generates a substantial amount of traffic, please use with caution. 
+**Warning:** This code was originally created for personal use, it generates a substantial amount of traffic, please use with caution. 
 
 
