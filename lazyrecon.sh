@@ -489,6 +489,8 @@ fi
   duration=$SECONDS
   echo "Scan completed in : $(($duration / 60)) minutes and $(($duration % 60)) seconds."
   cleantemp 
+  stty sane
+  tput sgr0
 }
 todate=$(date +"%Y-%m-%d")
 path=$(pwd)
