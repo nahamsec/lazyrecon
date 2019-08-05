@@ -200,8 +200,7 @@ report(){
   echo "${yellow}	[+] Generating report for $subdomain"
  
    cat ./$domain/$foldername/aqua_out/aquatone_session.json | jq --arg v "$subd" -r '.pages[$v].headers[] | keys[] as $k | "\($k), \(.[$k])"' | grep -v "decreasesSecurity\|increasesSecurity" >> ./$domain/$foldername/aqua_out/parsedjson/$subdomain.headers
-  
-	dirsearchfile=$(ls ~/tools/dirsearch/reports/$subdomain/ | grep -v old)
+  dirsearchfile=$(ls ~/tools/dirsearch/reports/$subdomain/ | grep -v old)
 	
   touch ./$domain/$foldername/reports/$subdomain.html
   echo '<html><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -346,6 +345,7 @@ echo '<script>$(document).ready( function () {
         "paging":   true,
         "ordering": true,
         "info":     false
+	"lengthMenu": [[10, 25, 50,100, -1], [10, 25, 50,100, "All"]],
     });
 } );</script></head>'>> ./$domain/$foldername/master_report.html
 
