@@ -110,6 +110,8 @@ echo  "${yellow}Total of $(wc -l ./$domain/$foldername/urllist.txt | awk '{print
 recon(){
 
   echo "${green}Recon started on $domain ${reset}"
+  echo "Listing subdomains using amass..."
+  amass enum -ip -d $domain >> ./$domain/$foldername/$domain.txt
   echo "Listing subdomains using sublister..."
   python ~/tools/Sublist3r/sublist3r.py -d $domain -t 10 -v -o ./$domain/$foldername/$domain.txt > /dev/null
   echo "Checking certspotter..."
