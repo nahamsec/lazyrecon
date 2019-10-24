@@ -7,7 +7,7 @@
 #
 # 
 ########################################
-auquatoneThreads=5
+aquatoneThreads=5
 subdomainThreads=10
 dirsearchThreads=50
 dirsearchWordlist=~/tools/dirsearch/db/dicc.txt
@@ -133,7 +133,7 @@ cat ./$domain/$foldername/urllist.txt | xargs -P$subdomainThreads -I % sh -c "py
 aqua(){
 
 echo "Starting aquatone scan..."
-cat ./$domain/$foldername/urllist.txt | aquatone -chrome-path $chromiumPath -out ./$domain/$foldername/aqua_out -threads $auquatoneThreads -silent
+cat ./$domain/$foldername/urllist.txt | aquatone -chrome-path $chromiumPath -out ./$domain/$foldername/aqua_out -threads $aquatoneThreads -silent
 
 
 }
