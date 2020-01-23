@@ -41,7 +41,9 @@ while getopts ":d:e:r:" o; do
 
             #### working on subdomain exclusion
         e)
-            excluded=${OPTARG}
+            set -f
+	    IFS=" "
+	    excluded=($OPTARG)
             ;;
 
 		r)
