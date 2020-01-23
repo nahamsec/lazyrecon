@@ -31,7 +31,7 @@ SECONDS=0
 
 domain=
 subreport=
-usage() { echo -e "Usage: $0 -d domain [-e]\n  Select -e to specify excluded domains\n " 1>&2; exit 1; }
+usage() { echo -e "Usage: ./lazyrecon.sh -d domain.com [-e] [excluded.domain.com,other.domain.com]\n  Select -e to specify excluded subdomains\n " 1>&2; exit 1; }
 
 while getopts ":d:e:r:" o; do
     case "${o}" in
@@ -62,7 +62,6 @@ if [ -z "${domain}" ] && [[ -z ${subreport[@]} ]]; then
 fi
 
 discovery(){
-        excludedomains
 	hostalive $domain
 	cleandirsearch $domain
 	aqua $domain
@@ -124,13 +123,16 @@ recon(){
 }
 
 excludedomains(){
+  # from @incredincomp with love <3
   echo "Excluding domains (if you set them with -e)..."
   IFS=$'\n'
+  # prints the $excluded array to excluded.txt with newlines 
   printf "%s\n" "${excluded[*]}" > ./$domain/$foldername/excluded.txt
+  # this form of grep takes two files, reads the input from the first file, finds in the second file and removes
   grep -vFf ./$domain/$foldername/excluded.txt ./$domain/$foldername/alldomains.txt > ./$domain/$foldername/alldomains2.txt
   mv ./$domain/$foldername/alldomains2.txt ./$domain/$foldername/alldomains.txt
-  #rm ./$domain/$foldername/excluded.txt
-  printf "%s " "${excluded[@]} have been removed from list of hosts."
+  #rm ./$domain/$foldername/excluded.txt # uncomment to remove excluded.txt, I left for testing purposes
+  printf "%s " "${excluded[@]} have been removed from list of hosts.\n"
   unset IFS
 }
 
