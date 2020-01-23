@@ -42,8 +42,9 @@ while getopts ":d:e:r:" o; do
             #### working on subdomain exclusion
         e)
             set -f
-	    IFS=" "
-	    excluded+=(${OPTARG})
+	    IFS=","
+	    excluded+=($OPTARG)
+	    unset IFS
             ;;
 
 		r)
@@ -131,6 +132,7 @@ excludedomains(){
   mv ./$domain/$foldername/alldomains2.txt ./$domain/$foldername/alldomains.txt
   #rm ./$domain/$foldername/excluded.txt
   echo "$excluded have been removed from list of hosts."
+  unset IFS
 }
 
 dirsearcher(){
