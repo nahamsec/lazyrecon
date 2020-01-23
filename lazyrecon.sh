@@ -59,7 +59,7 @@ if [ -z "${domain}" ] && [[ -z ${subreport[@]} ]]; then
 fi
 
 discovery(){
-  excludedomains
+        excludedomains
 	hostalive $domain
 	cleandirsearch $domain
 	aqua $domain
@@ -113,6 +113,7 @@ recon(){
   echo "Checking certspotter..."
   curl -s https://certspotter.com/api/v0/certs\?domain\=$domain | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $domain >> ./$domain/$foldername/$domain.txt
   nsrecords $domain
+  excludedomains
   echo "Starting discovery..."
   discovery $domain
   cat ./$domain/$foldername/$domain.txt | sort -u > ./$domain/$foldername/$domain.txt
@@ -125,7 +126,8 @@ excludedomains(){
   printf "%s\n" "${excluded[@]}" > ./$domain/$foldername/excluded.txt
   grep -vFf ./$domain/$foldername/excluded.txt ./$domain/$foldername/alldomains.txt > ./$domain/$foldername/alldomains2.txt
   mv ./$domain/$foldername/alldomains2.txt ./$domain/$foldername/alldomains.txt
-  rm ./$domain/$foldername/excluded.txt
+  #rm ./$domain/$foldername/excluded.txt
+  echo "$excluded have been removed from list of hosts."
 }
 
 dirsearcher(){
