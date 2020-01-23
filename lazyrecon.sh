@@ -43,7 +43,7 @@ while getopts ":d:e:r:" o; do
         e)
             set -f
 	    IFS=" "
-	    excluded=($OPTARG)
+	    excluded+=(${OPTARG})
             ;;
 
 		r)
@@ -125,7 +125,8 @@ recon(){
 excludedomains(){
   echo "Excluding domains (if you set them with -e)..."
   IFS=$'\n'
-  printf "%s\n" "${excluded[@]}" > ./$domain/$foldername/excluded.txt
+  #printf "%s\n" "${excluded[@]}" > ./$domain/$foldername/excluded.txt
+  printf "%s\n" "${excluded[*]}" > ./$domain/$foldername/excluded.txt
   grep -vFf ./$domain/$foldername/excluded.txt ./$domain/$foldername/alldomains.txt > ./$domain/$foldername/alldomains2.txt
   mv ./$domain/$foldername/alldomains2.txt ./$domain/$foldername/alldomains.txt
   #rm ./$domain/$foldername/excluded.txt
