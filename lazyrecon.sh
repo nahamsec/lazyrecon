@@ -126,12 +126,11 @@ recon(){
 excludedomains(){
   echo "Excluding domains (if you set them with -e)..."
   IFS=$'\n'
-  #printf "%s\n" "${excluded[@]}" > ./$domain/$foldername/excluded.txt
   printf "%s\n" "${excluded[*]}" > ./$domain/$foldername/excluded.txt
   grep -vFf ./$domain/$foldername/excluded.txt ./$domain/$foldername/alldomains.txt > ./$domain/$foldername/alldomains2.txt
   mv ./$domain/$foldername/alldomains2.txt ./$domain/$foldername/alldomains.txt
   #rm ./$domain/$foldername/excluded.txt
-  echo "$excluded have been removed from list of hosts."
+  printf "%s " "${excluded[@]} have been removed from list of hosts."
   unset IFS
 }
 
