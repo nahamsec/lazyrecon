@@ -31,7 +31,7 @@ SECONDS=0
 
 domain=
 subreport=
-usage() { echo -e "Usage: ./lazyrecon.sh -d domain.com [-e] [excluded.domain.com,other.domain.com]\n   -e   -   specify excluded subdoma ins\n " 1>&2; exit 1; }
+usage() { echo -e "Usage: ./lazyrecon.sh -d domain.com [-e] [excluded.domain.com,other.domain.com]\n       -e   -   specify excluded subdoma ins\n " 1>&2; exit 1; }
 
 while getopts ":d:e:r:" o; do
     case "${o}" in
