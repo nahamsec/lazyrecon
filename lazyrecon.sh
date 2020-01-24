@@ -5,7 +5,7 @@
 # ///                                        \\\
 #  		You can edit your configuration here
 #
-# 
+#
 ########################################
 auquatoneThreads=5
 subdomainThreads=10
@@ -31,7 +31,7 @@ SECONDS=0
 
 domain=
 subreport=
-usage() { echo -e "Usage: $0 -d domain [-e]\n  Select -e to specify excluded domains\n " 1>&2; exit 1; }
+usage() { echo -e "Usage: ./lazyrecon.sh -d domain.com [-e] [excluded.domain.com,other.domain.com]\nOptions:\n  -e\t-\tspecify excluded subdomains\n " 1>&2; exit 1; }
 
 while getopts ":d:e:r:" o; do
     case "${o}" in
@@ -41,9 +41,12 @@ while getopts ":d:e:r:" o; do
 
             #### working on subdomain exclusion
         e)
-            excluded=${OPTARG}
+            set -f
+	    IFS=","
+	    excluded+=($OPTARG)
+	    unset IFS
             ;;
-		
+
 		r)
             subreport+=("$OPTARG")
             ;;
@@ -64,33 +67,32 @@ discovery(){
 	aqua $domain
 	cleanup $domain
 	waybackrecon $domain
-	dirsearcher 
-
-
+	dirsearcher
 }
+
 waybackrecon () {
 echo "Scraping wayback for data..."
-cat ./$domain/$foldername/urllist.txt | waybackurls > ./$domain/$foldername/wayback-data/waybackurls.txt 
+cat ./$domain/$foldername/urllist.txt | waybackurls > ./$domain/$foldername/wayback-data/waybackurls.txt
 cat ./$domain/$foldername/wayback-data/waybackurls.txt  | sort -u | unfurl --unique keys > ./$domain/$foldername/wayback-data/paramlist.txt
-[ -s ./$domain/$foldername/wayback-data/paramlist.txt ] && echo "Wordlist saved to /$domain/$foldername/wayback-data/paramlist.txt" 
+[ -s ./$domain/$foldername/wayback-data/paramlist.txt ] && echo "Wordlist saved to /$domain/$foldername/wayback-data/paramlist.txt"
 
 cat ./$domain/$foldername/wayback-data/waybackurls.txt  | sort -u | grep -P "\w+\.js(\?|$)" | sort -u > ./$domain/$foldername/wayback-data/jsurls.txt
-[ -s ./$domain/$foldername/wayback-data/jsurls.txt ] && echo "JS Urls saved to /$domain/$foldername/wayback-data/jsurls.txt" 
+[ -s ./$domain/$foldername/wayback-data/jsurls.txt ] && echo "JS Urls saved to /$domain/$foldername/wayback-data/jsurls.txt"
 
 cat ./$domain/$foldername/wayback-data/waybackurls.txt  | sort -u | grep -P "\w+\.php(\?|$) | sort -u " > ./$domain/$foldername/wayback-data/phpurls.txt
-[ -s ./$domain/$foldername/wayback-data/phpurls.txt ] && echo "PHP Urls saved to /$domain/$foldername/wayback-data/phpurls.txt" 
+[ -s ./$domain/$foldername/wayback-data/phpurls.txt ] && echo "PHP Urls saved to /$domain/$foldername/wayback-data/phpurls.txt"
 
 cat ./$domain/$foldername/wayback-data/waybackurls.txt  | sort -u | grep -P "\w+\.aspx(\?|$) | sort -u " > ./$domain/$foldername/wayback-data/aspxurls.txt
-[ -s ./$domain/$foldername/wayback-data/aspxurls.txt ] && echo "ASP Urls saved to /$domain/$foldername/wayback-data/aspxurls.txt" 
+[ -s ./$domain/$foldername/wayback-data/aspxurls.txt ] && echo "ASP Urls saved to /$domain/$foldername/wayback-data/aspxurls.txt"
 
 cat ./$domain/$foldername/wayback-data/waybackurls.txt  | sort -u | grep -P "\w+\.jsp(\?|$) | sort -u " > ./$domain/$foldername/wayback-data/jspurls.txt
-[ -s ./$domain/$foldername/wayback-data/jspurls.txt ] && echo "JSP Urls saved to /$domain/$foldername/wayback-data/jspurls.txt" 
+[ -s ./$domain/$foldername/wayback-data/jspurls.txt ] && echo "JSP Urls saved to /$domain/$foldername/wayback-data/jspurls.txt"
 }
 
 cleanup(){
   cd ./$domain/$foldername/screenshots/
-  rename 's/_/-/g' -- * 
-  
+  rename 's/_/-/g' -- *
+
   cd $path
 }
 
@@ -105,8 +107,6 @@ echo "$(cat ./$domain/$foldername/urllist.txt | sort -u)" > ./$domain/$foldernam
 echo  "${yellow}Total of $(wc -l ./$domain/$foldername/urllist.txt | awk '{print $1}') live subdomains were found${reset}"
 }
 
-
-
 recon(){
 
   echo "${green}Recon started on $domain ${reset}"
@@ -115,34 +115,41 @@ recon(){
   echo "Checking certspotter..."
   curl -s https://certspotter.com/api/v0/certs\?domain\=$domain | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $domain >> ./$domain/$foldername/$domain.txt
   nsrecords $domain
-
+  excludedomains
   echo "Starting discovery..."
   discovery $domain
   cat ./$domain/$foldername/$domain.txt | sort -u > ./$domain/$foldername/$domain.txt
 
-
 }
 
+excludedomains(){
+  # from @incredincomp with love <3
+  echo "Excluding domains (if you set them with -e)..."
+  IFS=$'\n'
+  # prints the $excluded array to excluded.txt with newlines 
+  printf "%s\n" "${excluded[*]}" > ./$domain/$foldername/excluded.txt
+  # this form of grep takes two files, reads the input from the first file, finds in the second file and removes
+  grep -vFf ./$domain/$foldername/excluded.txt ./$domain/$foldername/alldomains.txt > ./$domain/$foldername/alldomains2.txt
+  mv ./$domain/$foldername/alldomains2.txt ./$domain/$foldername/alldomains.txt
+  #rm ./$domain/$foldername/excluded.txt # uncomment to remove excluded.txt, I left for testing purposes
+  echo "Subdomains that have been excluded from discovery:"
+  printf "%s\n" "${excluded[@]}"
+  unset IFS
+}
 
 dirsearcher(){
 
-echo "Starting dirsearch..." 
+echo "Starting dirsearch..."
 cat ./$domain/$foldername/urllist.txt | xargs -P$subdomainThreads -I % sh -c "python3 ~/tools/dirsearch/dirsearch.py -e php,asp,aspx,jsp,html,zip,jar -w $dirsearchWordlist -t $dirsearchThreads -u % | grep Target && tput sgr0 && ./lazyrecon.sh -r $domain -r $foldername -r %"
 }
 
 aqua(){
-
 echo "Starting aquatone scan..."
 cat ./$domain/$foldername/urllist.txt | aquatone -chrome-path $chromiumPath -out ./$domain/$foldername/aqua_out -threads $auquatoneThreads -silent
-
-
 }
 
 searchcrtsh(){
-
-
-
- ~/tools/massdns/scripts/ct.py $domain 2>/dev/null > ./$domain/$foldername/tmp.txt 
+ ~/tools/massdns/scripts/ct.py $domain 2>/dev/null > ./$domain/$foldername/tmp.txt
  [ -s ./$domain/$foldername/tmp.txt ] && cat ./$domain/$foldername/tmp.txt | ~/tools/massdns/bin/massdns -r ~/tools/massdns/lists/resolvers.txt -t A -q -o S -w  ./$domain/$foldername/crtsh.txt
  cat ./$domain/$foldername/$domain.txt | ~/tools/massdns/bin/massdns -r ~/tools/massdns/lists/resolvers.txt -t A -q -o S -w  ./$domain/$foldername/domaintemp.txt
 }
@@ -151,8 +158,6 @@ mass(){
  ~/tools/massdns/scripts/subbrute.py $massdnsWordlist $domain | ~/tools/massdns/bin/massdns -r ~/tools/massdns/lists/resolvers.txt -t A -q -o S | grep -v 142.54.173.92 > ./$domain/$foldername/mass.txt
 }
 nsrecords(){
-
-
                 echo "Checking http://crt.sh"
                 searchcrtsh $domain
                 echo "Starting Massdns Subdomain discovery this may take a while"
@@ -193,15 +198,15 @@ nsrecords(){
                 done
                 sleep 1
 
-        }
+}
 
 report(){
   subdomain=$(echo $subd | sed 's/\http\:\/\///g' |  sed 's/\https\:\/\///g')
   echo "${yellow}	[+] Generating report for $subdomain"
- 
+
    cat ./$domain/$foldername/aqua_out/aquatone_session.json | jq --arg v "$subd" -r '.pages[$v].headers[] | keys[] as $k | "\($k), \(.[$k])"' | grep -v "decreasesSecurity\|increasesSecurity" >> ./$domain/$foldername/aqua_out/parsedjson/$subdomain.headers
   dirsearchfile=$(ls ~/tools/dirsearch/reports/$subdomain/ | grep -v old)
-	
+
   touch ./$domain/$foldername/reports/$subdomain.html
   echo '<html><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">' >> ./$domain/$foldername/reports/$subdomain.html
@@ -217,7 +222,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 echo '<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.1.0/material.min.css">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.material.min.css">
   <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script><script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/dataTables.material.min.js"></script>'>> ./$domain/$foldername/reports/$subdomain.html 
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script><script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/dataTables.material.min.js"></script>'>> ./$domain/$foldername/reports/$subdomain.html
 echo '<script>$(document).ready( function () {
     $("#myTable").DataTable({
         "paging":   true,
@@ -228,7 +233,7 @@ echo '<script>$(document).ready( function () {
                 "lengthMenu": [[10, 25, 50,100, -1], [10, 25, 50,100, "All"]],
 
     });
-} );</script></head>'>> ./$domain/$foldername/reports/$subdomain.html 
+} );</script></head>'>> ./$domain/$foldername/reports/$subdomain.html
 
 echo '<body class="dark"><header class="site-header">
 <div class="site-title"><p>' >> ./$domain/$foldername/reports/$subdomain.html
@@ -307,11 +312,11 @@ check=$(echo "$ln" | awk '{print $1}')
 
 [ "$check" = "name," ] && echo -n "$ln : " | sed 's/name, //g' >> ./$domain/$foldername/reports/$subdomain.html
 [ "$check" = "value," ] && echo " $ln" | sed 's/value, //g' >> ./$domain/$foldername/reports/$subdomain.html
-	
+
 done
 
 
- 
+
 echo "</pre>" >> ./$domain/$foldername/reports/$subdomain.html
 echo "<h2>NMAP Results</h2>
 <pre>
@@ -443,10 +448,10 @@ cleandirsearch(){
 cleantemp(){
 
     rm ./$domain/$foldername/temp.txt
-	rm ./$domain/$foldername/tmp.txt
+  	rm ./$domain/$foldername/tmp.txt
     rm ./$domain/$foldername/domaintemp.txt
     rm ./$domain/$foldername/cleantemp.txt
-    
+
 }
 main(){
 if [ -z "${domain}" ]; then
@@ -481,14 +486,14 @@ fi
   touch ./$domain/$foldername/ipaddress.txt
   touch ./$domain/$foldername/cleantemp.txt
   touch ./$domain/$foldername/master_report.html
-  
-  cleantemp 
+
+  cleantemp
   recon $domain
   master_report $domain
   echo "${green}Scan for $domain finished successfully${reset}"
   duration=$SECONDS
   echo "Scan completed in : $(($duration / 60)) minutes and $(($duration % 60)) seconds."
-  cleantemp 
+  cleantemp
   stty sane
   tput sgr0
 }
@@ -497,4 +502,3 @@ path=$(pwd)
 foldername=recon-$todate
 source ~/.bash_profile
 main $domain
-
