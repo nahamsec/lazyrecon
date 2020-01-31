@@ -9,7 +9,11 @@
 
 # Usage
 
-`./lazyrecon.sh -d target.com`
+`./lazyrecon.sh -d domain.com`
+
+To exclude particular subdomains:
+
+`./lazyrecon.sh -d domain.com -e excluded.domain.com,other.domain.com`
 
 # About
 
@@ -44,6 +48,7 @@ This tool allows you to gather some information that should help you identify wh
 # New features
 - Directory search module is now MULTITHREADED (up to 10 subdomains scanned at a time)
 - Enhanced html reports with the ability to search for strings, endpoints, reponse sizes or status codes
+- Subdomain exclusion by using option `-e` like this: `-e excluded.domain.com,other.domain.com`
 
 # DEMO
 ![cli output](https://github.com/plenumlab/lazyrecon/raw/dev/upgrade/recon.gif)
@@ -71,7 +76,7 @@ This script makes use of tools developped by the following people
 
 # TO DO
 - Report only mode to generate reports for old dirsearch data
-- SubDomain exclusion
+
 
 
 
