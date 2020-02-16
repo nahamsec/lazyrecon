@@ -123,18 +123,22 @@ recon(){
 }
 
 excludedomains(){
-  # from @incredincomp with love <3
-  echo "Excluding domains (if you set them with -e)..."
-  IFS=$'\n'
-  # prints the $excluded array to excluded.txt with newlines 
-  printf "%s\n" "${excluded[*]}" > ./$domain/$foldername/excluded.txt
-  # this form of grep takes two files, reads the input from the first file, finds in the second file and removes
-  grep -vFf ./$domain/$foldername/excluded.txt ./$domain/$foldername/alldomains.txt > ./$domain/$foldername/alldomains2.txt
-  mv ./$domain/$foldername/alldomains2.txt ./$domain/$foldername/alldomains.txt
-  #rm ./$domain/$foldername/excluded.txt # uncomment to remove excluded.txt, I left for testing purposes
-  echo "Subdomains that have been excluded from discovery:"
-  printf "%s\n" "${excluded[@]}"
-  unset IFS
+  if [ -z "$excluded" ]; then
+    echo "No domains have been excluded."
+  else
+    # from @incredincomp with love <3 SORRY!!
+    echo "Excluding domains (if you set them with -e)..."
+    IFS=$'\n'
+    # prints the $excluded array to excluded.txt with newlines
+    printf "%s\n" "${excluded[*]}" > ./$domain/$foldername/excluded.txt
+    # this form of grep takes two files, reads the input from the first file, finds in the second file and removes
+    grep -vFf ./$domain/$foldername/excluded.txt ./$domain/$foldername/alldomains.txt > ./$domain/$foldername/alldomains2.txt
+    mv ./$domain/$foldername/alldomains2.txt ./$domain/$foldername/alldomains.txt
+    #rm ./$domain/$foldername/excluded.txt # uncomment to remove excluded.txt, I left for testing purposes
+    echo "Subdomains that have been excluded from discovery:"
+    printf "%s\n" "${excluded[@]}"
+    unset IFS
+  fi
 }
 
 dirsearcher(){
