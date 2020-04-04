@@ -11,7 +11,7 @@ auquatoneThreads=5
 subdomainThreads=10
 dirsearchThreads=50
 dirsearchWordlist=~/tools/dirsearch/db/dicc.txt
-massdnsWordlist=~/tools/SecLists/Discovery/DNS/clean-jhaddix-dns.txt
+massdnsWordlist=~/tools/SecLists/Discovery/DNS/dns-Jhaddix.txt
 chromiumPath=/snap/bin/chromium
 ########################################
 # Happy Hunting
