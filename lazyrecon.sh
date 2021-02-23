@@ -113,7 +113,7 @@ recon(){
   echo "Listing subdomains using sublister..."
   python ~/tools/Sublist3r/sublist3r.py -d $domain -t 10 -v -o ./$domain/$foldername/$domain.txt > /dev/null
   echo "Checking certspotter..."
-  curl -s https://api.certspotter.com/v1/issuances\?domain\=$1\&match_wildcards\=true\&include_subdomains\=true\&expand\=dns_names | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $domain >> ./$domain/$foldername/$domain.txt
+  curl -s https://api.certspotter.com/v1/issuances\?domain\=$domain\&match_wildcards\=true\&include_subdomains\=true\&expand\=dns_names | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u | grep $domain >> ./$domain/$foldername/$domain.txt
   nsrecords $domain
   excludedomains
   echo "Starting discovery..."
